@@ -121,6 +121,11 @@ was tested and rejected: tracking broke and the room came out stretched.
 
 ## How it works
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/media/architecture-dark.png">
+  <img src="docs/media/architecture.png" alt="Architecture: users upload a phone walkthrough to one Cloud Run service with an L4 GPU, which runs the web app, 3D engine, coverage, AI inspection, risk engine and 3D report, calls Gemini 3.8 Flash on Vertex AI, and writes to Cloud Storage, BigQuery and Pub/Sub.">
+</picture>
+
 ```
 photo ─► quality check + integrity (dHash duplicate, EXIF) ─► Gemini: room + components + authenticity
       ─► prompt router (defect_classes.yaml) ─► LocateAnything-3B: defect boxes ─► NMS / merge
