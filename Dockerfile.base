@@ -1,13 +1,14 @@
 # Property Inspection AI - BASE image: the heavy parts that rarely change. The app image (Dockerfile) is
-# built FROM this one and only adds the code, so a code change rebuilds and pushes a few MB, not ~9 GB.
+# built FROM this one and only adds the code, so a normal deploy uploads and pushes a few MB, not ~9 GB.
 #   LocateAnything-3B engine (locate-anything.cpp, built here for Linux + CUDA), llama.cpp llama-server (built
 #   here) for Gemma 4 E4B, torch + every Python package, and the model weights in models/.
 # Rebuild it only when models/, third_party/, the llama.cpp tag, torch or the system libraries change:
-#   docker build -f Dockerfile.base -t property-inspection-ai:base .
+#   BUILD_BASE=1 PROJECT_ID=... ./deploy/deploy.sh          (Cloud Build: deploy/cloudbuild-base.yaml)
+#   docker build -f Dockerfile.base -t property-inspection-ai:base .     (local)
 
 # ---------------------------------------------------------------- 1. build the GPU binaries (Linux, CUDA 12.4)
 FROM nvidia/cuda:12.4.1-devel-ubuntu22.04 AS build
-# CUDA_ARCHS: 89 = L4 / RTX 40xx, 86 = RTX 30xx
+# CUDA_ARCHS: 89 = L4 (Cloud Run), 86 = RTX 30xx (local test)
 ARG CUDA_ARCHS="86;89"
 # LLAMA_TAG: the same llama.cpp build as the tested Windows binaries
 ARG LLAMA_TAG=b11223

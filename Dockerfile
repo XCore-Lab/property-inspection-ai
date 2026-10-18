@@ -1,8 +1,9 @@
 # Property Inspection AI - one container: web app + Gemini + local GPU models + 3D engine.
-# Needs an NVIDIA GPU for video walkthroughs.
+# Cloud Run with an NVIDIA L4 GPU (deploy/deploy.sh). Gemini runs on Vertex AI.
 #
 # This is the thin APP image: only the code, on top of the base image (Dockerfile.base), which holds the GPU
 # binaries (locate-anything.cpp, llama.cpp llama-server), torch + Python packages and the ~9 GB of weights.
+# deploy/deploy.sh builds the base on the first deploy (or with BUILD_BASE=1) and this image every time.
 #   docker build -f Dockerfile.base -t property-inspection-ai:base .                          (rarely)
 #   docker build --build-arg BASE_IMAGE=property-inspection-ai:base -t property-inspection-ai .
 ARG BASE_IMAGE=property-inspection-ai:base
@@ -21,5 +22,6 @@ COPY samples ./samples
 COPY VERSION ./
 
 EXPOSE 8080
-# hypercorn serves HTTP/1.1 and HTTP/2 cleartext (h2c).
+# hypercorn serves HTTP/1.1 and HTTP/2 cleartext (h2c). deploy.sh sets --use-http2, so Cloud Run talks h2c to the
+# container and video uploads are not capped at the 32 MiB HTTP/1 request limit.
 CMD ["sh", "-c", "exec python -m hypercorn backend.main:app --bind 0.0.0.0:${PORT} --keep-alive 75"]
