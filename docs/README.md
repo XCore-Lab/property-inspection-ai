@@ -23,11 +23,3 @@ Property Inspection AI, by Team XCore for the Google Cloud AI Builder Cup 2026 (
 [`media/`](media/) holds the screenshots, detection examples, live replay and coverage map shown in the project README,
 all produced from the included sample walkthrough (`samples/room_walkthrough.mp4`).
 It also has the architecture diagram used in both decks: [light](media/architecture.png) and [dark](media/architecture-dark.png).
-
-## Team XCore
-
-| Name | Role |
-|---|---|
-| Thanveer Ahamed | Team leader, Gen AI: Gemini and Gemma reasoning, verification, underwriting assistant |
-| Janitha Prathapa | Vision AI: defect detection, Depth Anything 3, SLAM, 3D model, coverage map |
-| Dinal Fernando | Solution architect: Cloud Run, Vertex AI, BigQuery, Pub/Sub, deployment |
