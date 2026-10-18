@@ -1,0 +1,59 @@
+# locate-anything.cpp — Ascend NPU (CANN) image
+#
+# Builds locate-anything-cli with the ggml CANN backend so inference runs on
+# Huawei Ascend NPUs (validated on Ascend 910B4 / Kylin V10 aarch64).
+#
+# The base image already ships the full CANN toolkit (compiler + runtime),
+# Python, and gguf, so the whole build is offline — no submodule fetch, no pip.
+#
+# Build (from the repo root, with the ggml submodule checked out):
+#   docker build -f Dockerfile.cann -t locate-anything-npu:latest .
+#
+# Run (map an NPU + the manager devices, see docker-compose.npu.yml):
+#   docker run --rm --privileged \
+#     --device /dev/davinci1 --device /dev/davinci_manager \
+#     --device /dev/devmm_svm --device /dev/hisi_hdc \
+#     -e ASCEND_RT_VISIBLE_DEVICES=1 \
+#     -v /usr/local/Ascend/driver:/usr/local/Ascend/driver:ro \
+#     -v /path/to/models:/models -v /path/to/images:/data \
+#     locate-anything-npu:latest detect \
+#       --model /models/locate-anything-f16.gguf --input /data/street.jpg \
+#       --prompt "Locate ... : person</c>car."
+ARG BASE_IMAGE=quay.io/ascend/vllm-ascend:v0.20.2rc1-arm64
+FROM ${BASE_IMAGE}
+
+# SOC of the target NPU. ggml-cann normally auto-detects via `npu-smi`, but that
+# tool is not present at build time inside a container, so pin it explicitly.
+# 910B4 -> Ascend910B4 (the compile path keys off the "910B" major SN).
+ARG SOC_TYPE=Ascend910B4
+
+SHELL ["/bin/bash", "-lc"]
+
+# Source tree (ggml vendored at third_party/ggml). .dockerignore keeps the
+# native build/ dir, models, and tarballs out of the context.
+WORKDIR /opt/locate-anything
+COPY . /opt/locate-anything
+
+# Configure + build. Two things differ from a stock CANN build:
+#   * -DSOC_TYPE so the SOC isn't auto-detected from an absent npu-smi.
+#   * LIBRARY_PATH points the final-exe link at the CANN lib64, because
+#     ggml-cann marks that search dir PRIVATE and it does not propagate to the
+#     locate-anything-cli link line on its own.
+RUN source /usr/local/Ascend/ascend-toolkit/set_env.sh \
+ && export LIBRARY_PATH="${ASCEND_TOOLKIT_HOME}/lib64:${LIBRARY_PATH}" \
+ && cmake -B build \
+      -DLA_GGML_CANN=ON \
+      -DSOC_TYPE=${SOC_TYPE} \
+      -DLA_BUILD_CLI=ON \
+      -DCMAKE_BUILD_TYPE=Release \
+ && cmake --build build -j "$(nproc)" \
+ && install -Dm755 build/examples/cli/locate-anything-cli /usr/local/bin/locate-anything-cli \
+ && rm -rf build
+
+# Auto-pick the first CANN device; override with LA_DEVICE=cpu / CANN0 / CANN1...
+ENV LA_DEVICE=CANN0
+
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["--help"]

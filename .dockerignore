@@ -1,0 +1,13 @@
+.venv/
+venv/
+data/
+**/__pycache__/
+**/*.pyc
+.pytest_cache/
+.env
+*.log
+tests/
+deploy/
+bin/
+*.zip
+README_FIRST.md

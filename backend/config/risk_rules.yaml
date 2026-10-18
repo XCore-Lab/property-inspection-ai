@@ -1,0 +1,78 @@
+# Property risk & valuation rules (deterministic, auditable - no model probabilities).
+# Used by backend/services/risk_service.py for insurers, mortgage lenders and real-estate valuation.
+# Costs are indicative repair ranges in USD per finding (multiplied by PI_COST_MULTIPLIER for the region).
+version: 1
+
+# How much a finding counts, by result state (rule engine output).
+state_weight:
+  DETECTED: 1.0
+  NEEDS_REVIEW: 0.5
+  MANUAL_CHECK_REQUIRED: 0.3
+  UNKNOWN: 0.2
+  NOT_DETECTED: 0.0
+
+severity_factor: {minor: 0.5, moderate: 1.0, severe: 2.0, unknown: 0.8}
+
+# category -> insurance peril, label, whether it drives collateral (mortgage) risk
+categories:
+  structural: {label: "Structural", peril: "Structural movement / subsidence", collateral: true}
+  water:      {label: "Water & moisture", peril: "Escape of water / damp", collateral: true}
+  safety:     {label: "Safety", peril: "Accidental damage / injury liability", collateral: false}
+  fire:       {label: "Fire", peril: "Fire / electrical", collateral: true}
+  security:   {label: "Security", peril: "Theft / forced entry", collateral: false}
+  cosmetic:   {label: "Cosmetic / wear", peril: "Wear and tear (usually excluded)", collateral: false}
+
+# defect -> category, risk points (at severity factor 1.0) and repair cost range [low, high] at moderate severity
+defects:
+  crack:          {category: structural, points: 12, cost: [250, 1500]}
+  deformation:    {category: structural, points: 16, cost: [800, 5000]}
+  water_damage:   {category: water,      points: 14, cost: [400, 3000]}
+  mold:           {category: water,      points: 14, cost: [500, 3500]}
+  rust:           {category: water,      points: 5,  cost: [80, 400]}
+  stain:          {category: water,      points: 4,  cost: [60, 300]}
+  discoloration:  {category: water,      points: 3,  cost: [60, 300]}
+  broken_glass:   {category: safety,     points: 10, cost: [150, 900]}
+  broken:         {category: safety,     points: 8,  cost: [120, 900]}
+  detached:       {category: safety,     points: 7,  cost: [100, 700]}
+  hole:           {category: safety,     points: 6,  cost: [100, 500]}
+  burn_mark:      {category: fire,       points: 9,  cost: [100, 800]}
+  missing:        {category: cosmetic,   points: 4,  cost: [60, 400]}
+  peeling_paint:  {category: cosmetic,   points: 3,  cost: [80, 500]}
+  surface_damage: {category: cosmetic,   points: 3,  cost: [60, 400]}
+  chip:           {category: cosmetic,   points: 2,  cost: [40, 250]}
+  scratch:        {category: cosmetic,   points: 1,  cost: [30, 150]}
+  missing_grout:  {category: water,      points: 3,  cost: [60, 300]}
+  misalignment:   {category: cosmetic,   points: 3,  cost: [60, 350]}
+  grease_buildup: {category: fire,       points: 3,  cost: [40, 200]}
+  tear:           {category: cosmetic,   points: 2,  cost: [40, 300]}
+  worn:           {category: cosmetic,   points: 2,  cost: [40, 300]}
+  default:        {category: cosmetic,   points: 3,  cost: [50, 300]}
+
+# component overrides: a defect on these components changes category (e.g. broken lock = security)
+component_category:
+  door_lock: security
+  cupboard_lock: security
+  window: safety
+  exhaust_hood: fire
+
+# condition score = 100 - sum(points * severity_factor * state_weight); grades by score
+grades:
+  - {min: 85, grade: A, label: "Good"}
+  - {min: 70, grade: B, label: "Fair"}
+  - {min: 50, grade: C, label: "Below average"}
+  - {min: 30, grade: D, label: "Poor"}
+  - {min: 0,  grade: E, label: "Very poor"}
+
+# indicative effect on market / collateral value by grade [low %, high %] (negative = value reduction)
+valuation_impact_pct:
+  A: [0, 0]
+  B: [-1, -3]
+  C: [-3, -7]
+  D: [-7, -15]
+  E: [-15, -25]
+
+# insurance premium loading suggestion by risk level
+premium_loading_pct: {Low: 0, Moderate: 5, High: 15, Critical: 30}
+
+# Evidence completeness for video walkthroughs: AI-inspected surface coverage below this -> refer
+min_coverage_pct: 60

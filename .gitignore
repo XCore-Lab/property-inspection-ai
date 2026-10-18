@@ -1,0 +1,16 @@
+.venv/
+data/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+*.log
+
+# Model weights (~9 GB) and the Windows GPU programs (~2 GB) are too large for Git (GitHub's limit is 100 MB
+# per file). Copy models/ and bin/ from Google_Hackathon_v1.zip into this folder; see README_FIRST.md.
+models/
+bin/
+*.zip
+
+# local tooling
+.claude/

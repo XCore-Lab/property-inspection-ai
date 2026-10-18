@@ -1,0 +1,66 @@
+# Property Inspection AI - BASE image: the heavy parts that rarely change. The app image (Dockerfile) is
+# built FROM this one and only adds the code, so a normal deploy uploads and pushes a few MB, not ~9 GB.
+#   LocateAnything-3B engine (locate-anything.cpp, built here for Linux + CUDA), llama.cpp llama-server (built
+#   here) for Gemma 4 E4B, torch + every Python package, and the model weights in models/.
+# Rebuild it only when models/, third_party/, the llama.cpp tag, torch or the system libraries change:
+#   BUILD_BASE=1 PROJECT_ID=... ./deploy/deploy.sh          (Cloud Build: deploy/cloudbuild-base.yaml)
+#   docker build -f Dockerfile.base -t property-inspection-ai:base .     (local)
+
+# ---------------------------------------------------------------- 1. build the GPU binaries (Linux, CUDA 12.4)
+FROM nvidia/cuda:12.4.1-devel-ubuntu22.04 AS build
+# CUDA_ARCHS: 89 = L4 (Cloud Run), 86 = RTX 30xx (local test)
+ARG CUDA_ARCHS="86;89"
+# LLAMA_TAG: the same llama.cpp build as the tested Windows binaries
+ARG LLAMA_TAG=b11223
+# JOBS: parallel compile jobs ("" = all CPUs; lower it on a small machine)
+ARG JOBS=""
+RUN apt-get update && apt-get install -y --no-install-recommends cmake ninja-build git ca-certificates g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# LocateAnything-3B engine -> liblocate_anything.so (ggml linked in statically)
+COPY third_party/locate-anything.cpp /src/locate-anything.cpp
+RUN cmake -S /src/locate-anything.cpp -B /build/la -G Ninja -DCMAKE_BUILD_TYPE=Release \
+        -DLA_SHARED=ON -DLA_GGML_CUDA=ON -DLA_BUILD_CLI=OFF -DLA_BUILD_TESTS=OFF \
+        -DGGML_NATIVE=OFF -DCMAKE_CUDA_ARCHITECTURES="${CUDA_ARCHS}" \
+    && cmake --build /build/la --target locate_anything -j"${JOBS:-$(nproc)}" \
+    && mkdir -p /out/locate-anything && cp "$(find /build/la -name 'liblocate_anything.so' | head -1)" /out/locate-anything/
+
+# Gemma 4 server -> llama-server (static ggml; libcuda comes from the GPU driver at run time)
+RUN git clone --depth 1 --branch "${LLAMA_TAG}" https://github.com/ggml-org/llama.cpp /src/llama.cpp \
+    && cmake -S /src/llama.cpp -B /build/llama -G Ninja -DCMAKE_BUILD_TYPE=Release \
+        -DGGML_CUDA=ON -DGGML_NATIVE=OFF -DBUILD_SHARED_LIBS=OFF -DLLAMA_CURL=OFF \
+        -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_EXAMPLES=OFF -DCMAKE_CUDA_ARCHITECTURES="${CUDA_ARCHS}" \
+        -DCMAKE_EXE_LINKER_FLAGS=-Wl,--allow-shlib-undefined \
+    && cmake --build /build/llama --target llama-server -j"${JOBS:-$(nproc)}" \
+    && mkdir -p /out/llama.cpp && cp /build/llama/bin/llama-server /out/llama.cpp/
+
+# ---------------------------------------------------------------- 2. runtime: Python, torch, binaries, weights
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PORT=8080
+
+# open3d / OpenCV runtime libraries + a TrueType font for annotated images
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libgl1 libegl1 libgomp1 libglib2.0-0 libx11-6 libxext6 libxrender1 libsm6 fonts-dejavu-core \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY requirements.txt .
+# torch cu124 wheels bring the CUDA 12.4 runtime + cuBLAS as pip packages; the GPU binaries use them too.
+RUN pip install --extra-index-url https://download.pytorch.org/whl/cu124 \
+        "torch==2.5.1+cu124" "torchvision==0.20.1+cu124" -r requirements.txt
+ENV LD_LIBRARY_PATH=/usr/local/lib/python3.11/site-packages/nvidia/cuda_runtime/lib:/usr/local/lib/python3.11/site-packages/nvidia/cublas/lib
+
+COPY --from=build /out /app/bin
+# Model weights (~9 GB): LocateAnything-3B GGUF, Gemma 4 E4B GGUF + vision projector, Depth Anything 3 BASE.
+COPY models /app/models
+
+ENV HF_HOME=/app/models/hf \
+    HF_HUB_OFFLINE=1 \
+    PI_MODELS_DIR=/app/models \
+    PI_BIN_DIR=/app/bin \
+    PI_DA3_MODEL=DA3-BASE \
+    PI_SLAM_WORK_DIR=/tmp/slam

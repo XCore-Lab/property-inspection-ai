@@ -1,0 +1,273 @@
+{
+  "wall_crack_interior_plaster_1.jpg": {
+    "query": "wall crack interior plaster",
+    "expected_room": "living_room",
+    "expected_component": "wall",
+    "expected_defect": "crack",
+    "title": "File:Tumac\u00e1cori mission church interior (30b7614d-410b-4368-99ea-03932131427a).jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Tumac%C3%A1cori_mission_church_interior_(30b7614d-410b-4368-99ea-03932131427a).jpg",
+    "license": "Public domain",
+    "artist": "NPS Photo"
+  },
+  "ceiling_crack_1.jpg": {
+    "query": "ceiling crack",
+    "expected_room": "living_room",
+    "expected_component": "ceiling",
+    "expected_defect": "crack",
+    "title": "File:Cracks in ceiling.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Cracks_in_ceiling.jpg",
+    "license": "CC BY-SA 3.0",
+    "artist": "Lionel Allorge"
+  },
+  "ceiling_crack_2.jpg": {
+    "query": "ceiling crack",
+    "expected_room": "living_room",
+    "expected_component": "ceiling",
+    "expected_defect": "crack",
+    "title": "File:Kitchen renovation firecode foam above walls in cracks of ceiling.JPG",
+    "page": "https://commons.wikimedia.org/wiki/File:Kitchen_renovation_firecode_foam_above_walls_in_cracks_of_ceiling.JPG",
+    "license": "CC0",
+    "artist": "Tomwsulcer"
+  },
+  "peeling_paint_wall_interior_1.jpg": {
+    "query": "peeling paint wall interior",
+    "expected_room": "bedroom",
+    "expected_component": "wall",
+    "expected_defect": "peeling_paint",
+    "title": "File:EFTA00002592 - Damaged wall with exposed concrete and peeling paint revealing a dark unfinished interior space.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:EFTA00002592_-_Damaged_wall_with_exposed_concrete_and_peeling_paint_revealing_a_dark_unfinished_interior_space.jpg",
+    "license": "Public domain",
+    "artist": "Federal Bureau of Investigation"
+  },
+  "cracked_floor_tile_1.jpg": {
+    "query": "cracked floor tile",
+    "expected_room": "kitchen",
+    "expected_component": "floor_tile",
+    "expected_defect": "crack",
+    "title": "File:Cracked tile flooring.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Cracked_tile_flooring.jpg",
+    "license": "CC BY-SA 4.0",
+    "artist": "Mk2010"
+  },
+  "cracked_floor_tile_2.jpg": {
+    "query": "cracked floor tile",
+    "expected_room": "kitchen",
+    "expected_component": "floor_tile",
+    "expected_defect": "crack",
+    "title": "File:2019 broken tile in bathroom.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:2019_broken_tile_in_bathroom.jpg",
+    "license": "CC BY-SA 4.0",
+    "artist": "Gerardolagunes"
+  },
+  "hole_in_drywall_1.jpg": {
+    "query": "hole in drywall",
+    "expected_room": "bedroom",
+    "expected_component": "wall",
+    "expected_defect": "hole",
+    "title": "File:Drywall firestop problem4.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Drywall_firestop_problem4.jpg",
+    "license": "Public domain",
+    "artist": "Achim Hering"
+  },
+  "broken_window_glass_2.jpg": {
+    "query": "broken window glass",
+    "expected_room": "living_room",
+    "expected_component": "window",
+    "expected_defect": "broken_glass",
+    "title": "File:Broken window glass in Esbjerg, 2.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Broken_window_glass_in_Esbjerg,_2.jpg",
+    "license": "CC BY-SA 2.0",
+    "artist": "Kent Madsen"
+  },
+  "damaged_door_2.jpg": {
+    "query": "damaged door",
+    "expected_room": "corridor",
+    "expected_component": "door",
+    "expected_defect": "surface_damage",
+    "title": "File:A damaged door - geograph.org.uk - 7702392.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:A_damaged_door_-_geograph.org.uk_-_7702392.jpg",
+    "license": "CC BY-SA 2.0",
+    "artist": "Neil Owen"
+  },
+  "stained_carpet_2.jpg": {
+    "query": "stained carpet",
+    "expected_room": "living_room",
+    "expected_component": "rug",
+    "expected_defect": "stain",
+    "title": "File:Floor cleaner inside Sullivan Hall.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Floor_cleaner_inside_Sullivan_Hall.jpg",
+    "license": "CC BY-SA 3.0",
+    "artist": "Ktr101"
+  },
+  "kitchen_countertop_1.jpg": {
+    "query": "kitchen countertop",
+    "expected_room": "kitchen",
+    "expected_component": "countertop",
+    "expected_defect": "none",
+    "title": "File:Laminate Kitchen Countertop Beige.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Laminate_Kitchen_Countertop_Beige.jpg",
+    "license": "CC0",
+    "artist": "Kurtkaiser"
+  },
+  "kitchen_countertop_2.jpg": {
+    "query": "kitchen countertop",
+    "expected_room": "kitchen",
+    "expected_component": "countertop",
+    "expected_defect": "none",
+    "title": "File:Kitchen Countertop Installation & Custom Stone Fitting.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Kitchen_Countertop_Installation_%26_Custom_Stone_Fitting.jpg",
+    "license": "CC0",
+    "artist": "Donovan Nimmo"
+  },
+  "range_hood_kitchen_2.jpg": {
+    "query": "range hood kitchen",
+    "expected_room": "kitchen",
+    "expected_component": "exhaust_hood",
+    "expected_defect": "none",
+    "title": "File:California Kitchen Range Hood.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:California_Kitchen_Range_Hood.jpg",
+    "license": "CC BY-SA 4.0",
+    "artist": "Stilfehler"
+  },
+  "bathroom_interior_tiles_1.jpg": {
+    "query": "bathroom interior tiles",
+    "expected_room": "bathroom",
+    "expected_component": "wall_tile",
+    "expected_defect": "none",
+    "title": "File:Mid-City New Orleans Bathroom - Tile in the Shower.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Mid-City_New_Orleans_Bathroom_-_Tile_in_the_Shower.jpg",
+    "license": "CC BY 2.0",
+    "artist": "Bart Everson"
+  },
+  "bathroom_interior_tiles_2.jpg": {
+    "query": "bathroom interior tiles",
+    "expected_room": "bathroom",
+    "expected_component": "wall_tile",
+    "expected_defect": "none",
+    "title": "File:Old bathroom with subway tiles.JPG",
+    "page": "https://commons.wikimedia.org/wiki/File:Old_bathroom_with_subway_tiles.JPG",
+    "license": "CC0",
+    "artist": "Alf van Beem"
+  },
+  "_rejected_titles": [
+    "File:Broken Tile Floor Lyric Theatre Historic Overtown (33124092910).jpg",
+    "File:2019 broken tile in bathroom.jpg",
+    "File:Low-end EF3 damage to a home in Virginia Beach, Virginia.jpg",
+    "File:American homes and gardens (1907) (17966091848).jpg",
+    "File:American homes and gardens (1907) (17966089678).jpg",
+    "File:Carpet cleaning Damascus.jpg",
+    "File:Interior, All Saints' church, Gainsborough (18194571821).jpg",
+    "File:The century illustrated monthly magazine (1882) (14595823560).jpg",
+    "File:Shattered light fixture 3.jpg",
+    "File:Range hood exhaust pipe.jpg",
+    "File:DSC 7577 A weathered concrete staircase with peeling paint and balustrades leading up to an open sunlit landing overlooking a clear sky and distant palm.jpg",
+    "File:Texaco nanticoke drywall penetrations.jpg",
+    "File:Ceiling, Grand Hall, \u2018Iolani Palace, King Street, Honolulu, HI.jpg",
+    "File:Drawing, Decoration of a Wall as a Picture Gallery, ca. 1810 (CH 18550399).jpg",
+    "File:Drawing, Decoration of a Wall as a Picture Gallery, ca. 1810 (CH 18550399-2).jpg",
+    "File:Short Brothers Tunnels - Stillages full of casting moulds.jpg",
+    "File:Sixth report and inventory of monuments and constructions in the county of Berwick (1915) (14801795523).jpg",
+    "File:Damaged plaster rough 16k (Amal Kumar via Poly Haven).png",
+    "File:Fonds Andr\u00e9 Raymond (1925-2011) - Alg\u00e9rie - Alger - Maison dans la rue des Lotophages pr\u00e8s du Palais du Bastion (M\u00e9diHAL 4446635).jpg",
+    "File:Nasir-al molk -1.jpg",
+    "File:Red Carpet Fashion Design - panoramio.jpg",
+    "File:Red Carpet Fashion Design - panoramio (5).jpg",
+    "File:Roman, Figurine Vehicle Mount (FindID 255227).jpg",
+    "File:Roman, Figurine Vehicle Mount. Copyright Lisa Chapman (FindID 255227).jpg",
+    "File:Structural ceiling defect.jpg",
+    "File:Damaged plaster (Amal Kumar via Poly Haven).png",
+    "File:Cambrian college fireproofing delamination 6.jpg",
+    "File:An old rusty chain closes a door and is connected to an old lock.jpg",
+    "File:Water Damaged Wall of Delmar School (8467135868).jpg"
+  ],
+  "cracked_wall_1.jpg": {
+    "query": "cracked wall",
+    "expected_room": "living_room",
+    "expected_component": "wall",
+    "expected_defect": "crack",
+    "title": "File:Cracked wall 02.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Cracked_wall_02.jpg",
+    "license": "CC BY-SA 4.0",
+    "artist": "Almanta"
+  },
+  "cracked_wall_2.jpg": {
+    "query": "cracked wall",
+    "expected_room": "living_room",
+    "expected_component": "wall",
+    "expected_defect": "crack",
+    "title": "File:Cracked wall 03.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Cracked_wall_03.jpg",
+    "license": "CC BY-SA 4.0",
+    "artist": "Almanta"
+  },
+  "damaged_plaster_ceiling_1.jpg": {
+    "query": "damaged plaster ceiling",
+    "expected_room": "living_room",
+    "expected_component": "ceiling",
+    "expected_defect": "surface_damage",
+    "title": "File:DSC 7573 A long dim corridor in an unfinished or abandoned building with cracked plaster walls and puddles reflecting the ceiling.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:DSC_7573_A_long_dim_corridor_in_an_unfinished_or_abandoned_building_with_cracked_plaster_walls_and_puddles_reflecting_the_ceiling.jpg",
+    "license": "CC BY-SA 4.0",
+    "artist": "PattayaPatrol"
+  },
+  "cracked_window_pane_1.jpg": {
+    "query": "cracked window pane",
+    "expected_room": "living_room",
+    "expected_component": "window",
+    "expected_defect": "broken_glass",
+    "title": "File:Cracked pane of glass above the altar - geograph.org.uk - 7461197.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Cracked_pane_of_glass_above_the_altar_-_geograph.org.uk_-_7461197.jpg",
+    "license": "CC BY-SA 2.0",
+    "artist": "Neil Theasby"
+  },
+  "stain_on_carpet_1.jpg": {
+    "query": "stain on carpet",
+    "expected_room": "living_room",
+    "expected_component": "rug",
+    "expected_defect": "stain",
+    "title": "File:Stained Paprika carpet at the Yale School of Architecture, 2018.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Stained_Paprika_carpet_at_the_Yale_School_of_Architecture,_2018.jpg",
+    "license": "CC BY-SA 4.0",
+    "artist": "RukshanV"
+  },
+  "rusty_door_lock_2.jpg": {
+    "query": "rusty door lock",
+    "expected_room": "corridor",
+    "expected_component": "door_lock",
+    "expected_defect": "rust",
+    "title": "File:Rusty lock in Dijon.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Rusty_lock_in_Dijon.jpg",
+    "license": "CC BY-SA 2.0",
+    "artist": "Arria Belli"
+  },
+  "peeling_paint_ceiling_1.jpg": {
+    "query": "peeling paint ceiling",
+    "expected_room": "bedroom",
+    "expected_component": "ceiling",
+    "expected_defect": "peeling_paint",
+    "title": "File:Ceiling sheetrock damaged by water so paint was peeling.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Ceiling_sheetrock_damaged_by_water_so_paint_was_peeling.jpg",
+    "license": "CC0",
+    "artist": "Tomwsulcer"
+  },
+  "peeling_paint_ceiling_2.jpg": {
+    "query": "peeling paint ceiling",
+    "expected_room": "bedroom",
+    "expected_component": "ceiling",
+    "expected_defect": "peeling_paint",
+    "title": "File:Eastern State Penitentiary peeling ceiling paint.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Eastern_State_Penitentiary_peeling_ceiling_paint.jpg",
+    "license": "CC BY-SA 4.0",
+    "artist": "Saschacat916"
+  },
+  "water_damaged_wall_1.jpg": {
+    "query": "water damaged wall",
+    "expected_room": "bedroom",
+    "expected_component": "wall",
+    "expected_defect": "water_damage",
+    "title": "File:A water damaged public house wall in Broadstairs Kent England.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:A_water_damaged_public_house_wall_in_Broadstairs_Kent_England.jpg",
+    "license": "CC BY-SA 4.0",
+    "artist": "Acabashi"
+  }
+}

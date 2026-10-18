@@ -1,0 +1,6 @@
+# Shell scripts and Dockerfiles must keep LF line endings (bash and the container build fail on CRLF),
+# also when the repository is checked out on Windows. Windows batch files keep CRLF.
+* text=auto
+*.sh text eol=lf
+Dockerfile* text eol=lf
+*.bat text eol=crlf

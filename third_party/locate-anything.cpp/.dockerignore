@@ -1,0 +1,13 @@
+# Keep the Docker build context small and reproducible.
+.git
+**/.git
+build/
+**/build/
+*.tar.gz
+*.gguf
+models/
+node_modules/
+.claude/
+benchmarks/media/
+benchmarks/plots/
+benchmarks/demo/

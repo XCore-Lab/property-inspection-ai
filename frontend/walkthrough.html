@@ -1,0 +1,823 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Walkthrough Inspection</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='black'/%3E%3Cpath d='M8 15.5 16 9l8 6.5V24H8z' fill='none' stroke='%23f6f4ed' stroke-width='2.4' stroke-linejoin='round'/%3E%3Cpath d='m12.5 18.5 2.5 2.5 4.5-5' fill='none' stroke='%23f6f4ed' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<script>
+  (function () { try { var t = localStorage.getItem("pi_theme"); if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); } catch (e) {} })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Archivo loads without blocking rendering / scripts (falls back to system fonts offline). -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" media="print" onload="this.media='all'">
+<script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
+<style>
+  /* Design tokens: same "Assay" ivory / black theme as the console (frontend/styles.css). */
+  :root {
+    --bg:#f6f4ed; --surface:#fcfbf7; --surface-2:#f1eee5; --surface-3:#e8e4d8; --border:#e0dbce; --border-strong:#c9c2b1;
+    --text:#1c1b17; --text-2:#4a4740; --text-3:#6b675c;
+    --accent:#1c1b17; --accent-soft:#ebe7db; --accent-ink:#000; --btn:#000; --btn-hover:#2b2a25; --on-accent:#f6f4ed;
+    --det:#9b2c24; --det-soft:#f5e6e1; --det-ink:#7e1f18; --det-line:#e3c2b9;
+    --rev:#a8741a; --rev-soft:#f6edd8; --rev-ink:#7a520f; --rev-line:#e6d2a6;
+    --man:#3e5c76; --man-soft:#e5ebef; --man-ink:#2e4659; --man-line:#c2cfd9;
+    --ok:#3c6e47; --ok-soft:#e3ecdf; --ok-ink:#2c5535; --ok-line:#bfd3bf;
+    --gA:#2f5d3a; --gB:#5e6e2e; --gC:#a07a1f; --gD:#8f5128; --gE:#85231d;
+    --seen:#a8741a; --good:#3c6e47;
+    --mv-bg:radial-gradient(120% 90% at 50% 20%, #fcfbf7, #e4dfd1);
+    --shadow-sm:none; --shadow:0 1px 2px rgba(28,27,23,.06);
+    --focus:0 0 0 2px var(--bg), 0 0 0 4px var(--text); --r-sm:10px; --r:12px; --r-lg:16px; color-scheme:light;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg:#141310; --surface:#1b1a16; --surface-2:#22211c; --surface-3:#2c2a24; --border:#33312a; --border-strong:#48453b;
+    --text:#f1eee4; --text-2:#c9c4b6; --text-3:#9c9688;
+    --accent:#f1eee4; --accent-soft:#2c2a24; --accent-ink:#f6f4ed; --btn:#f1eee4; --btn-hover:#fff; --on-accent:#000;
+    --det:#e07a6e; --det-soft:rgba(224,122,110,.12); --det-ink:#f0a69c; --det-line:rgba(224,122,110,.34);
+    --rev:#d9a441; --rev-soft:rgba(217,164,65,.12); --rev-ink:#ecc576; --rev-line:rgba(217,164,65,.34);
+    --man:#8fb0cc; --man-soft:rgba(143,176,204,.12); --man-ink:#b5cde0; --man-line:rgba(143,176,204,.34);
+    --ok:#84b98f; --ok-soft:rgba(132,185,143,.12); --ok-ink:#a9d3b2; --ok-line:rgba(132,185,143,.34);
+    --gA:#5e9a6a; --gB:#93a14e; --gC:#c99a35; --gD:#c47b4a; --gE:#c9584d;
+    --seen:#d9a441; --good:#84b98f;
+    --mv-bg:radial-gradient(120% 90% at 50% 20%, #2a2822, #0c0b09); --shadow-sm:none; --shadow:0 1px 2px rgba(0,0,0,.4); color-scheme:dark; } }
+  :root[data-theme="dark"] {
+    --bg:#141310; --surface:#1b1a16; --surface-2:#22211c; --surface-3:#2c2a24; --border:#33312a; --border-strong:#48453b;
+    --text:#f1eee4; --text-2:#c9c4b6; --text-3:#9c9688;
+    --accent:#f1eee4; --accent-soft:#2c2a24; --accent-ink:#f6f4ed; --btn:#f1eee4; --btn-hover:#fff; --on-accent:#000;
+    --det:#e07a6e; --det-soft:rgba(224,122,110,.12); --det-ink:#f0a69c; --det-line:rgba(224,122,110,.34);
+    --rev:#d9a441; --rev-soft:rgba(217,164,65,.12); --rev-ink:#ecc576; --rev-line:rgba(217,164,65,.34);
+    --man:#8fb0cc; --man-soft:rgba(143,176,204,.12); --man-ink:#b5cde0; --man-line:rgba(143,176,204,.34);
+    --ok:#84b98f; --ok-soft:rgba(132,185,143,.12); --ok-ink:#a9d3b2; --ok-line:rgba(132,185,143,.34);
+    --gA:#5e9a6a; --gB:#93a14e; --gC:#c99a35; --gD:#c47b4a; --gE:#c9584d;
+    --seen:#d9a441; --good:#84b98f;
+    --mv-bg:radial-gradient(120% 90% at 50% 20%, #2a2822, #0c0b09); --shadow-sm:none; --shadow:0 1px 2px rgba(0,0,0,.4); color-scheme:dark; }
+
+  * { box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  #warnings:empty { display:none; }
+  #warnings { display:grid; gap:10px; }
+  body { margin:0; background:var(--bg); color:var(--text); font:14px/1.55 "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
+         font-feature-settings:"cv11","ss01"; -webkit-font-smoothing:antialiased; }
+  h1, h2, h3 { margin:0; letter-spacing:-.01em; }
+  h2 { font-size:16px; font-weight:600; }
+  a { color:var(--accent); text-decoration:none; } a:hover { text-decoration:underline; }
+  :focus-visible { outline:none; box-shadow:var(--focus); border-radius:6px; }
+  code { font:12px ui-monospace, Consolas, monospace; background:var(--surface-3); padding:1px 5px; border-radius:4px; }
+  .sub { color:var(--text-3); font-size:13px; font-weight:400; }
+  .num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  button, .btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; border:1px solid transparent; border-radius:var(--r-sm);
+    padding:7px 12px; background:var(--btn); color:#fff; font:inherit; font-weight:600; font-size:13px; line-height:20px; cursor:pointer; white-space:nowrap; text-decoration:none; }
+  button:hover:not(:disabled), .btn:hover { background:var(--btn-hover); text-decoration:none; }
+  button:disabled { opacity:.5; cursor:progress; }
+  .btn.ghost, button.ghost { background:var(--surface); color:var(--text); border-color:var(--border-strong); box-shadow:var(--shadow-sm); }
+  .btn.ghost:hover, button.ghost:hover:not(:disabled) { background:var(--surface-2); }
+  .btn svg, button svg { width:15px; height:15px; flex:none; }
+
+  /* header */
+  header.top { position:sticky; top:0; z-index:30; background:color-mix(in srgb, var(--surface) 88%, transparent); backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border); }
+  .top-in { max-width:1480px; margin:0 auto; padding:12px 24px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+  .back { display:inline-flex; align-items:center; gap:10px; color:var(--text); font-weight:700; font-size:14px; }
+  .back:hover { text-decoration:none; }
+  .mark { width:32px; height:32px; border-radius:9px; display:grid; place-items:center; color:#fff; background:linear-gradient(135deg,#6366f1,#4338ca); flex:none; }
+  .mark svg { width:18px; height:18px; }
+  .ttl { min-width:0; flex:1 1 260px; }
+  .ttl h1 { font-size:18px; font-weight:700; overflow-wrap:anywhere; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .ttl .meta { color:var(--text-3); font-size:12.5px; margin-top:2px; }
+  .top-actions { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+
+  main { max-width:1480px; margin:0 auto; padding:24px; display:grid; gap:20px; }
+  .row { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:20px; }
+  .row.viewer { grid-template-columns:minmax(0,1fr) 380px; }
+  @media (max-width:1180px) { .row, .row.viewer { grid-template-columns:minmax(0,1fr); } }
+  .panel { background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); padding:20px; min-width:0; box-shadow:var(--shadow-sm); }
+  .panel-head { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
+  .sec-h { font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--text-3); margin:18px 0 8px; }
+
+  /* chips */
+  .pill { display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:600; line-height:18px; padding:1px 8px; border-radius:999px;
+    border:1px solid var(--border); background:var(--surface-2); color:var(--text-2); white-space:nowrap; flex:none; }
+  .pill::before { content:""; width:6px; height:6px; border-radius:50%; background:currentColor; }
+  .pill.DETECTED { background:var(--det-soft); color:var(--det-ink); border-color:var(--det-line); }
+  .pill.NEEDS_REVIEW { background:var(--rev-soft); color:var(--rev-ink); border-color:var(--rev-line); }
+  .pill.UNKNOWN { background:var(--man-soft); color:var(--man-ink); border-color:var(--man-line); }
+  .pill.ok { background:var(--ok-soft); color:var(--ok-ink); border-color:var(--ok-line); }
+  .pill.fail { background:var(--surface-3); color:var(--text-3); }
+  .dec { display:inline-flex; font-size:12px; font-weight:600; padding:2px 9px; border-radius:6px; }
+  .dec.go { color:var(--ok-ink); background:var(--ok-soft); } .dec.cond { color:var(--rev-ink); background:var(--rev-soft); } .dec.refer { color:var(--det-ink); background:var(--det-soft); }
+  .gb, .grade-big { display:inline-flex; align-items:center; justify-content:center; color:#fff; font-weight:800; flex:none; background:var(--text-3); }
+  .gb { width:30px; height:30px; border-radius:8px; font-size:15px; }
+  .grade-big { width:60px; height:60px; border-radius:14px; font-size:32px; box-shadow:inset 0 -3px 0 rgba(0,0,0,.15); }
+  .g-A { background:var(--gA); } .g-B { background:var(--gB); } .g-C { background:var(--gC); } .g-D { background:var(--gD); } .g-E { background:var(--gE); }
+  .lvl { display:inline-flex; font-size:12px; font-weight:600; padding:1px 8px; border-radius:999px; background:var(--surface-3); color:var(--text-2); border:1px solid var(--border); }
+  .lvl.Low { background:var(--ok-soft); color:var(--ok-ink); border-color:var(--ok-line); }
+  .lvl.Moderate, .lvl.Medium { background:var(--rev-soft); color:var(--rev-ink); border-color:var(--rev-line); }
+  .lvl.High, .lvl.Critical { background:var(--det-soft); color:var(--det-ink); border-color:var(--det-line); }
+
+  /* KPI strip */
+  .kstrip { display:grid; grid-template-columns:repeat(auto-fit, minmax(160px,1fr)); gap:12px; }
+  .k1 { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:14px 16px; box-shadow:var(--shadow-sm); min-width:0; }
+  .k1 .k { font-size:12px; color:var(--text-3); font-weight:500; }
+  .k1 .v { font-size:22px; font-weight:700; letter-spacing:-.02em; font-variant-numeric:tabular-nums; margin-top:2px; overflow-wrap:anywhere; }
+  .k1 .s { font-size:12px; color:var(--text-3); }
+
+  /* tabs */
+  .tabs { display:inline-flex; gap:2px; padding:3px; background:var(--surface-3); border-radius:10px; flex-wrap:wrap; max-width:100%; margin-bottom:12px; }
+  .tabs button { background:transparent; color:var(--text-2); border:0; padding:5px 11px; font-weight:500; font-size:13px; border-radius:8px; white-space:nowrap; }
+  .tabs button:hover:not(:disabled) { background:transparent; color:var(--text); }
+  .tabs button.on { background:var(--surface); color:var(--text); box-shadow:var(--shadow); }
+  .tabs.wrap { flex-wrap:wrap; }
+
+  /* 3D viewer */
+  .mvwrap { position:relative; border-radius:var(--r); overflow:hidden; border:1px solid var(--border); }
+  model-viewer { width:100%; height:640px; display:block; background:var(--mv-bg); --poster-color:transparent; }
+  model-viewer:not(:defined) > * { display:none; }
+  .mv-fallback { display:none; position:absolute; inset:0; place-items:center; text-align:center; color:var(--text-3); font-size:13px; padding:24px; }
+  model-viewer:not(:defined) ~ .mv-fallback { display:grid; }
+  .mv-legend { position:absolute; left:12px; bottom:12px; z-index:4; display:flex; gap:10px; flex-wrap:wrap; font-size:12px; color:#fff;
+    background:rgba(11,13,18,.62); backdrop-filter:blur(6px); padding:6px 10px; border-radius:999px; }
+  .mv-legend span { display:inline-flex; align-items:center; gap:5px; }
+  .mv-legend i { width:10px; height:10px; border-radius:50%; border:1.5px solid #fff; }
+  .hotspot { position:relative; width:22px; height:22px; border-radius:50%; border:2px solid #fff; color:#fff; font:700 11px/1 "Archivo", system-ui, sans-serif;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 1px 5px rgba(0,0,0,.5); padding:0; background:var(--man);
+    transition:transform .15s; --c:var(--man); }
+  .hotspot:hover:not(:disabled) { transform:scale(1.15); background:var(--c); }
+  .hotspot.DETECTED { --c:#d92d20; background:#d92d20; } .hotspot.NEEDS_REVIEW { --c:#dc6803; background:#dc6803; } .hotspot.UNKNOWN { --c:#1570ef; background:#1570ef; }
+  .hotspot.sel { transform:scale(1.25); box-shadow:0 0 0 4px rgba(255,255,255,.55), 0 0 0 7px var(--c); z-index:3; }
+  .hotspot:focus-visible { box-shadow:0 0 0 3px #fff, 0 0 0 6px var(--c); }
+  .hotspot .tip { display:none; position:absolute; left:50%; bottom:calc(100% + 8px); transform:translateX(-50%); white-space:normal; width:max-content; max-width:min(260px, 70vw); text-align:center; line-height:1.35; background:rgba(11,13,18,.9);
+    color:#fff; border-radius:8px; padding:5px 9px; font-weight:500; font-size:12px; pointer-events:none; box-shadow:0 4px 14px rgba(0,0,0,.35); }
+  .hotspot:hover .tip, .hotspot:focus-visible .tip, .hotspot.sel .tip { display:block; }
+  #pip { position:absolute; right:12px; bottom:12px; width:34%; min-width:200px; border:2px solid #fff; box-shadow:0 4px 16px rgba(0,0,0,.45);
+    border-radius:10px; background:#000; z-index:5; }
+  .pip-lbl { position:absolute; left:12px; top:12px; z-index:5; background:rgba(11,13,18,.7); color:#fff; font-size:12px; padding:4px 10px; border-radius:999px; backdrop-filter:blur(6px); }
+  .help { color:var(--text-3); font-size:12.5px; margin-top:10px; }
+
+  /* findings list */
+  .flist { display:flex; flex-direction:column; gap:8px; max-height:700px; overflow-y:auto; margin:0 -6px; padding:0 6px; }
+  .fitem { display:grid; grid-template-columns:22px 64px minmax(0,1fr); gap:10px; align-items:start; padding:10px; border:1px solid var(--border);
+    border-radius:var(--r); cursor:pointer; background:var(--surface); text-align:left; color:var(--text); font:inherit; font-weight:400; width:100%; white-space:normal; line-height:1.45; }
+  .fitem:hover:not(:disabled) { background:var(--surface-2); border-color:var(--border-strong); }
+  .fitem.sel { border-color:var(--accent); background:var(--accent-soft); }
+  .fitem .n { width:22px; height:22px; border-radius:50%; display:grid; place-items:center; color:#fff; font-size:11px; font-weight:700; background:var(--man); }
+  .fitem .n.DETECTED { background:#d92d20; } .fitem .n.NEEDS_REVIEW { background:#dc6803; }
+  .fitem img { width:64px; height:64px; object-fit:cover; border-radius:8px; border:1px solid var(--border); background:var(--surface-3); }
+  .fitem .t { font-weight:600; font-size:13px; display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .fitem .d { font-size:12.5px; color:var(--text-2); margin-top:3px; }
+  .fitem .w { font-size:12px; color:var(--text-3); margin-top:3px; }
+  .so { display:block; font-size:12px; margin-top:6px; padding:5px 8px; border-radius:7px; background:var(--surface-2); border:1px solid var(--border); color:var(--text-2); }
+  .so.agree { background:var(--ok-soft); border-color:var(--ok-line); color:var(--ok-ink); }
+  .so.dispute { background:var(--rev-soft); border-color:var(--rev-line); color:var(--rev-ink); }
+  .empty { color:var(--text-3); text-align:center; padding:24px 12px; font-size:13px; }
+
+  /* risk */
+  .risk-top { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  .risk-score { font-size:14px; color:var(--text-2); } .risk-score b { font-size:24px; color:var(--text); font-variant-numeric:tabular-nums; }
+  .decision { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 12px; margin:14px 0; padding:12px 16px; border-radius:var(--r); border:1px solid var(--border); background:var(--surface-2); font-size:15px; }
+  .decision .k { font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--text-3); }
+  .decision.go { background:var(--ok-soft); border-color:var(--ok-line); } .decision.go b { color:var(--ok-ink); }
+  .decision.cond { background:var(--rev-soft); border-color:var(--rev-line); } .decision.cond b { color:var(--rev-ink); }
+  .decision.refer { background:var(--det-soft); border-color:var(--det-line); } .decision.refer b { color:var(--det-ink); }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:10px; }
+  .card { border:1px solid var(--border); border-radius:var(--r); padding:12px 14px; background:var(--surface-2); min-width:0; }
+  .card .k { color:var(--text-3); font-size:12px; font-weight:500; }
+  .card .v { font-size:20px; font-weight:700; letter-spacing:-.02em; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+  .risk ul { margin:0; padding-left:18px; color:var(--text-2); font-size:13px; } .risk li { margin:3px 0; }
+  .iwarn { border:1px solid var(--rev-line); background:var(--rev-soft); color:var(--rev-ink); border-radius:var(--r-sm); padding:10px 12px; margin-top:12px; font-size:13px; }
+  .bar { height:6px; background:var(--surface-3); border-radius:3px; position:relative; overflow:hidden; margin-top:8px; }
+  .bar i { position:absolute; left:0; top:0; bottom:0; border-radius:3px; }
+  .bar .s { background:var(--seen); } .bar .g { background:var(--good); }
+
+  /* tables */
+  .tw { overflow-x:auto; max-width:100%; border:1px solid var(--border); border-radius:var(--r); }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  .tw table.wide { min-width:460px; }
+  th { text-align:left; font-size:12px; font-weight:500; color:var(--text-3); padding:9px 12px; background:var(--surface-2); border-bottom:1px solid var(--border); white-space:nowrap; }
+  td { padding:10px 12px; border-bottom:1px solid var(--border); vertical-align:top; }
+  tbody tr:last-child td { border-bottom:0; }
+  th.num { text-align:right; }
+
+  /* ask */
+  .md { background:var(--surface-2); border:1px solid var(--border); border-radius:var(--r-sm); padding:10px 14px; overflow-wrap:anywhere; font-size:13px; color:var(--text-2); }
+  .md p { margin:4px 0; } .md b { color:var(--text); } .md ul, .md ol { margin:4px 0; padding-left:18px; } .md hr { border:0; border-top:1px solid var(--border); }
+  .md .lbl { font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--text-3); margin:0 0 6px; }
+  .md-scroll { max-height:420px; overflow-y:auto; }
+  .qa { display:grid; gap:12px; margin:12px 0; } .qa:empty { display:none; }
+  .qa .q { font-weight:600; font-size:13px; } .qa .q::before { content:"Q  "; color:var(--text-3); }
+  .qa .a { margin-top:6px; }
+  .ask-form { display:flex; gap:8px; margin-top:12px; }
+  .ask-form input { flex:1; min-width:0; padding:8px 12px; border:1px solid var(--border-strong); border-radius:var(--r-sm); background:var(--surface); color:var(--text); font:inherit; }
+  .ask-form input:focus { outline:none; border-color:var(--accent); box-shadow:var(--focus); }
+  .err { color:var(--det-ink); }
+  .ai-badge { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600; color:var(--accent-ink); background:var(--accent-soft); padding:2px 8px; border-radius:999px; }
+  .mini-spin { display:inline-block; width:11px; height:11px; margin-right:6px; vertical-align:-1px; border:2px solid var(--accent); border-right-color:transparent; border-radius:50%; animation:spin .8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  /* maps / media */
+  video, .map-img { width:100%; border-radius:var(--r); border:1px solid var(--border); display:block; background:#000; }
+  .map-img.plain { background:#fff; max-height:560px; object-fit:contain; }
+  .legend { display:flex; flex-wrap:wrap; gap:6px 14px; font-size:12px; color:var(--text-3); margin-top:10px; }
+  .legend span::before { content:""; display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:6px; vertical-align:-1px; background:var(--c); }
+  svg.chart { width:100%; height:150px; display:block; margin-top:14px; color:var(--text-2); }
+  ul.gaps { margin:0; padding:0; list-style:none; display:grid; gap:6px; }
+  ul.gaps li { display:flex; justify-content:space-between; gap:10px; padding:8px 12px; border:1px solid var(--border); border-radius:10px; font-size:13px; background:var(--surface-2); }
+  ul.gaps li b { font-weight:600; }
+  .gallery { display:grid; grid-template-columns:repeat(auto-fill, minmax(230px,1fr)); gap:14px; }
+  .kf { border:1px solid var(--border); border-radius:var(--r); overflow:hidden; display:flex; flex-direction:column; background:var(--surface); }
+  .kf img { width:100%; aspect-ratio:16/9; object-fit:cover; display:block; background:#000; }
+  .kf .cap { padding:10px 12px; font-size:13px; display:flex; flex-direction:column; gap:4px; }
+  .kf .cap .r1 { display:flex; justify-content:space-between; gap:8px; align-items:center; flex-wrap:wrap; }
+  details summary { cursor:pointer; list-style:none; display:flex; align-items:center; gap:8px; }
+  details summary::-webkit-details-marker { display:none; }
+  details summary::before { content:"\203A"; font-size:18px; color:var(--text-3); transition:transform .15s; }
+  details[open] summary::before { transform:rotate(90deg); }
+  #rep { width:100%; height:80vh; border:1px solid var(--border); border-radius:var(--r); margin-top:14px; background:#fff; }
+  .wbanner { border:1px solid var(--rev-line); background:var(--rev-soft); color:var(--rev-ink); border-radius:var(--r); padding:12px 16px; font-size:13px; }
+
+  @media (max-width:700px) {
+    .top-in { padding:10px 16px; gap:10px; }
+    header.top { position:static; }
+    .top-actions { width:100%; }
+    .ttl { flex-basis:0; }
+    .top-actions .btn span.lbl { display:none; }
+    main { padding:16px; gap:16px; }
+    .panel { padding:16px; border-radius:var(--r); }
+    model-viewer { height:440px; }
+    #pip { min-width:140px; width:44%; }
+    .kstrip { grid-template-columns:repeat(2, minmax(0,1fr)); }
+    .mv-legend { display:none; }
+    td { overflow-wrap:anywhere; }
+  }
+  @media (prefers-reduced-motion: reduce) { .hotspot { transition:none; } }
+
+  /* ---- Assay theme overrides (ivory paper, black structure, wide Archivo headings) ---- */
+  ::selection { background:#000; color:#f6f4ed; }
+  h1, h2, h3, .ttl h1 { font-stretch:116%; }
+  .ttl h1 { font-size:20px; font-weight:600; font-stretch:122%; letter-spacing:-.015em; }
+  a { color:var(--text); text-decoration:underline; text-decoration-color:var(--border-strong); text-underline-offset:3px; }
+  a:hover { text-decoration-color:currentColor; }
+  .back { text-decoration:none; }
+  button, .btn { border-radius:999px; padding:7px 14px; color:var(--on-accent); }
+  .btn.ghost, button.ghost { background:transparent; border-color:var(--border-strong); box-shadow:none; }
+  .btn.ghost:hover, button.ghost:hover:not(:disabled) { background:var(--surface); border-color:var(--text); }
+  header.top { background:#000; border-bottom:1px solid #24231f; backdrop-filter:none; color:#f3f0e7; }
+  header.top .back, header.top .ttl h1 { color:#f3f0e7; }
+  header.top .ttl .meta { color:#8f8a7d; }
+  header.top .btn.ghost, header.top button.ghost { color:#f3f0e7; border-color:#34322b; }
+  header.top .btn.ghost:hover, header.top button.ghost:hover:not(:disabled) { background:#151410; border-color:#8f8a7d; }
+  header.top .btn:not(.ghost), header.top button:not(.ghost) { background:#f3f0e7; color:#000; }
+  header.top .btn:not(.ghost):hover, header.top button:not(.ghost):hover:not(:disabled) { background:#fff; }
+  header.top :focus-visible { box-shadow:0 0 0 2px #000, 0 0 0 4px #f3f0e7; }
+  header.top .pill, header.top .lvl, header.top .dec { border-color:transparent; }
+  .mark { background:#f3f0e7; color:#000; border-radius:9px; }
+  .panel { box-shadow:none; }
+  .sec-h, .decision .k, .md .lbl { text-transform:none; letter-spacing:0; font-size:13px; color:var(--text); font-weight:600; font-stretch:116%; }
+  .decision .k { color:var(--text-3); font-weight:500; font-stretch:100%; }
+  .decision { background:var(--surface); }
+  .decision b { font-size:18px; font-stretch:125%; }
+  .pill, .lvl, .dec { border-radius:6px; }
+  .g-A { --g:var(--gA); } .g-B { --g:var(--gB); } .g-C { --g:var(--gC); } .g-D { --g:var(--gD); } .g-E { --g:var(--gE); }
+  .gb { border-radius:6px; font-stretch:125%; }
+  .grade-big { width:76px; height:76px; border-radius:16px; font-size:44px; font-stretch:125%; background:#000 !important; color:#f6f4ed;
+    box-shadow:inset 0 -7px 0 var(--g, var(--border-strong)), 0 0 0 1px var(--border-strong); }
+  .risk-score b { font-size:28px; font-weight:500; font-stretch:125%; letter-spacing:-.03em; }
+  .kstrip { gap:0; background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); overflow:hidden; }
+  .k1 { border:0; border-radius:0; box-shadow:1px 0 0 var(--border), 0 1px 0 var(--border); padding:16px 18px; }
+  .k1 .v { font-size:clamp(19px, 2.2vw, 24px); font-weight:500; font-stretch:125%; letter-spacing:-.03em; margin-top:8px; }
+  .cards { gap:0; background:var(--surface); border:1px solid var(--border); border-radius:var(--r); overflow:hidden; }
+  .cards .card { border:0; border-radius:0; background:var(--surface); box-shadow:1px 0 0 var(--border), 0 1px 0 var(--border); }
+  .card .v { font-weight:500; font-stretch:122%; }
+  .tabs { background:var(--surface-2); border:1px solid var(--border); border-radius:999px; }
+  .tabs button { border-radius:999px; padding:5px 13px; }
+  .tabs button.on { background:var(--btn); color:var(--on-accent); box-shadow:none; }
+  .tabs button.on:hover:not(:disabled) { background:var(--btn); color:var(--on-accent); }
+  .mvwrap { border:0; }
+  .mv-legend, .pip-lbl { background:rgba(0,0,0,.72); }
+  .fitem { border-radius:var(--r); }
+  .fitem:hover:not(:disabled) { border-color:var(--text); background:var(--surface); }
+  .fitem.sel { border-color:var(--text); background:var(--surface-2); box-shadow:inset 3px 0 0 var(--text); }
+  .ai-badge { color:var(--text-2); background:none; border:1px solid var(--border); font-weight:500; }
+  .mini-spin { border-color:var(--text); border-right-color:transparent; }
+  .ask-form input { border-radius:999px; padding-left:16px; }
+  .ask-form input:focus { border-color:var(--text); box-shadow:0 0 0 3px var(--accent-soft); }
+  .qa .q::before { content:"Q  "; color:var(--text-3); }
+  ul.gaps li { background:var(--surface); }
+  .kf { border-radius:var(--r); }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="m8.5 14 2.5 2.5 4.5-5"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></symbol>
+  <symbol id="i-cube" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></symbol>
+  <symbol id="i-map" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/></symbol>
+</defs></svg>
+
+<header class="top">
+  <div class="top-in">
+    <a class="back" href="/#/walkthroughs" id="lnk-home" title="Back to the inspection console"><span class="mark"><svg><use href="#i-home"/></svg></span></a>
+    <div class="ttl">
+      <h1><span id="title">Walkthrough inspection</span><span id="hdr-grade"></span><span id="hdr-dec"></span></h1>
+      <div class="meta" id="meta">Loading walkthrough…</div>
+    </div>
+    <div class="top-actions">
+      <a class="btn ghost" id="lnk-report" target="_blank" rel="noopener"><svg><use href="#i-doc"/></svg><span class="lbl">Report</span></a>
+      <a class="btn ghost" id="lnk-glb" download><svg><use href="#i-cube"/></svg><span class="lbl">GLB</span></a>
+      <a class="btn ghost" id="lnk-map" target="_blank" rel="noopener"><svg><use href="#i-map"/></svg><span class="lbl">Coverage PNG</span></a>
+      <button class="ghost" id="theme-btn" type="button" aria-label="Switch colour theme"><svg><use href="#i-moon"/></svg></button>
+    </div>
+  </div>
+</header>
+<main>
+  <div id="warnings"></div>
+  <div class="kstrip" id="kstrip"></div>
+
+  <div class="row viewer">
+    <section class="panel">
+      <div class="panel-head">
+        <h2>3D model <span class="sub">camera path, findings, coverage</span></h2>
+      </div>
+      <div class="tabs"><button class="on" data-g="glb" type="button">Full model</button><button data-mode="inside" id="btn-inside" type="button" hidden>Walk inside</button><button data-g="glb_gaps" type="button">Coverage gaps</button></div>
+      <div class="mvwrap">
+        <model-viewer id="mv" camera-controls touch-action="pan-y" exposure="1" tone-mapping="neutral" alt="3D model of the inspected property with numbered finding pins"
+                      camera-orbit="30deg 55deg auto" field-of-view="35deg" max-field-of-view="100deg"
+                      min-camera-orbit="auto 0deg 0.01m" max-camera-orbit="auto 180deg auto" interaction-prompt="none"></model-viewer>
+        <div class="mv-fallback" aria-live="polite"><div><b>Loading the 3D viewer…</b><br>If this stays, the model-viewer library could not be downloaded — the GLB can still be opened with the “GLB” button above.</div></div>
+        <div class="pip-lbl" id="pip-lbl" hidden>3D model seen from the video camera · t = <span id="pip-t">0.0</span> s</div>
+        <video id="pip" controls muted playsinline hidden></video>
+        <div class="mv-legend" id="mv-legend"><span><i style="background:#d92d20"></i>Detected</span><span><i style="background:#dc6803"></i>Needs review</span><span><i style="background:#1570ef"></i>Unknown</span></div>
+      </div>
+      <div class="help" id="mv-help">Drag to orbit, scroll to zoom, right-drag to pan. <b>Walk inside</b> shows the model from the exact camera of the video (play or scrub the small video).
+        <b>Coverage gaps</b>: red / amber patches were not inspectable. Numbered pins are findings — click one to fly to it.</div>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><h2>Findings <span class="sub" id="f-count"></span></h2></div>
+      <div class="flist" id="findings"></div>
+    </section>
+  </div>
+
+  <div class="row">
+    <section class="panel" id="risk-panel" hidden>
+      <div class="panel-head"><h2>Property risk &amp; valuation</h2><span class="ai-badge">Risk engine</span></div>
+      <div class="risk" id="risk"></div>
+    </section>
+    <section class="panel" id="ask-panel">
+      <div class="panel-head"><h2>Ask Gemini about this property</h2><span class="ai-badge"><svg width="12" height="12"><use href="#i-spark"/></svg>Underwriting assistant</span></div>
+      <div class="md md-scroll" id="ai-summary" hidden></div>
+      <div class="qa" id="qa"></div>
+      <form class="ask-form" id="ask-form">
+        <input id="ask-q" placeholder="e.g. Which rooms were not fully inspected?" autocomplete="off" maxlength="500" aria-label="Question for Gemini">
+        <button id="ask-go" type="submit">Ask</button>
+      </form>
+      <div class="sub" style="margin-top:8px">Gemini answers from this walkthrough's findings, coverage and risk assessment.</div>
+    </section>
+  </div>
+
+  <div class="row">
+    <section class="panel">
+      <div class="panel-head"><h2>Coverage map</h2><span class="sub">what was covered, as the walk progressed</span></div>
+      <div class="tabs"><button class="on" data-v="live" type="button">Live replay</button><button data-v="final" type="button">Final coverage map</button></div>
+      <video id="live" controls muted playsinline></video>
+      <img id="final" class="map-img" alt="Final coverage map" hidden>
+      <div class="legend">
+        <span style="--c:#dc2626">not seen</span><span style="--c:#f59e0b">seen (far / oblique)</span>
+        <span style="--c:#3cb43c">inspectable ≤ 3 m</span><span style="--c:#147814">inspected by AI</span>
+        <span style="--c:#1470c8">walk path</span><span style="--c:#b400b4">AI keyframe</span>
+      </div>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><h2>Coverage <span class="sub" id="tnow"></span></h2></div>
+      <div class="cards" id="cards"></div>
+      <svg class="chart" id="chart" viewBox="0 0 1000 140" preserveAspectRatio="none" role="img" aria-label="Coverage over time"></svg>
+      <div class="sub" style="margin-top:6px">Coverage over the walk (amber = seen, green = inspectable, purple ticks = AI keyframes). The numbers follow the live replay while it plays.</div>
+      <h3 class="sec-h">Not covered yet — film these again</h3>
+      <ul class="gaps" id="gaps"></ul>
+    </section>
+  </div>
+
+  <div class="row">
+    <section class="panel">
+      <div class="panel-head"><h2>Per surface</h2></div>
+      <div class="tw"><table class="wide"><thead><tr><th>Surface</th><th class="num">Seen</th><th class="num">Inspectable</th><th class="num">AI</th></tr></thead><tbody id="surfaces"></tbody></table></div>
+    </section>
+    <section class="panel" id="vid-panel">
+      <div class="panel-head"><h2>Videos <span class="sub">original, depth, SLAM</span></h2></div>
+      <div class="tabs wrap" id="vid-tabs"></div>
+      <video id="vid" controls muted playsinline></video>
+    </section>
+  </div>
+
+  <div id="slam-row" hidden>
+    <section class="panel">
+      <div class="panel-head"><h2>SLAM maps <span class="sub">floor plan, occupancy, navigation</span></h2><span class="sub">Click the image to open it full size</span></div>
+      <div class="tabs wrap" id="map-tabs"></div>
+      <a id="map-link" target="_blank" rel="noopener"><img id="map-img" class="map-img plain" alt=""></a>
+    </section>
+  </div>
+
+  <section class="panel" id="kf-panel" hidden>
+    <div class="panel-head"><h2>AI inspection — keyframes</h2><span class="sub" id="kf-sub"></span></div>
+    <div class="gallery" id="kf"></div>
+  </section>
+
+  <section class="panel">
+    <details id="rep-box"><summary><h2>Inspection report</h2><span class="sub">click to expand</span></summary>
+      <iframe id="rep" title="Inspection report" loading="lazy"></iframe></details>
+  </section>
+</main>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const LBL = {DETECTED:"Detected", NEEDS_REVIEW:"Needs review", UNKNOWN:"Unknown"};
+let W = null;
+
+// API key: same localStorage entry as the inspector page (only needed when the server has auth on).
+let KEY = "";
+try { KEY = localStorage.getItem("pi_api_key") || ""; } catch { /* storage blocked */ }
+
+// Theme: same localStorage entry as the console.
+const darkMQ = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+const effTheme = () => { const t = document.documentElement.getAttribute("data-theme"); return t === "dark" || t === "light" ? t : darkMQ && darkMQ.matches ? "dark" : "light"; };
+function paintTheme() {
+  const next = effTheme() === "dark" ? "light" : "dark";
+  $("theme-btn").innerHTML = `<svg><use href="#i-${next === "dark" ? "moon" : "sun"}"/></svg>`;
+  $("theme-btn").setAttribute("aria-label", `Switch to ${next} theme`); $("theme-btn").title = `Switch to ${next} theme`;
+}
+$("theme-btn").onclick = () => {
+  const next = effTheme() === "dark" ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", next);
+  try { localStorage.setItem("pi_theme", next); } catch { /* storage blocked */ }
+  paintTheme();
+};
+paintTheme();
+if (darkMQ && darkMQ.addEventListener) darkMQ.addEventListener("change", paintTheme);
+
+const GRADES = ["A", "B", "C", "D", "E"];
+const decisionCls = (d) => /^PROCEED WITH|CONDITION/i.test(d || "") ? "cond" : /^PROCEED/i.test(d || "") ? "go" : /^REFER/i.test(d || "") ? "refer" : "cond";
+const decShort = (d) => String(d || "—").replace(/\s+-\s+/, " — ");
+function money(v, cur) {
+  if (v == null || v === "" || isNaN(v)) return "—";
+  try { return new Intl.NumberFormat(undefined, {style: "currency", currency: cur || "USD", maximumFractionDigits: 0}).format(v); }
+  catch { return `${Math.round(v).toLocaleString()} ${cur || ""}`.trim(); }
+}
+const moneyRange = (a, b, cur) => a == null && b == null ? "—" : (b == null || a === b) ? money(a ?? b, cur) : `${money(a, cur)} – ${money(b, cur)}`;
+const pctRange = (r) => Array.isArray(r) ? (r[0] === r[1] ? `${r[0]}%` : `${r[0]}% to ${r[1]}%`) : r == null ? "—" : `${r}%`;
+function fmtDate(v) {
+  const d = new Date(typeof v === "number" && v < 1e12 ? v * 1000 : v);
+  return isNaN(d) ? String(v) : d.toLocaleString(undefined, {dateStyle: "medium", timeStyle: "short"});
+}
+// Gemini answers: small, safe markdown subset - escape first, then headings, bullets (- * 1.), bold, italics, rules.
+function mdLite(s) {
+  let out = "", list = "";
+  const inline = t => t.replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/(^|[^*])\*([^*\s][^*]*?)\*(?!\*)/g, "$1<i>$2</i>")
+    .replace(/`([^`]+)`/g, "<code>$1</code>");
+  const close = () => { if (list) { out += `</${list}>`; list = ""; } };
+  for (const raw of esc(s).split(/\r?\n/)) {
+    let m;
+    if ((m = raw.match(/^\s*[-*•]\s+(.*)$/)) || (m = raw.match(/^\s*\d+[.)]\s+(.*)$/))) {
+      const kind = /^\s*\d/.test(raw) ? "ol" : "ul";
+      if (list !== kind) { close(); out += `<${kind}>`; list = kind; }
+      out += `<li>${inline(m[1])}</li>`; continue;
+    }
+    close();
+    if ((m = raw.match(/^\s*#{1,6}\s+(.*)$/))) { out += `<p class="md-h"><b>${inline(m[1])}</b></p>`; continue; }
+    if (/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(raw)) { out += "<hr>"; continue; }
+    if (raw.trim()) out += `<p>${inline(raw)}</p>`;
+  }
+  close();
+  return out;
+}
+
+function riskHtml(risk) {
+  const rc = risk.repair_cost || {}, val = risk.valuation || {}, ins = risk.insurance || {};
+  const mort = risk.mortgage || {}, ev = risk.evidence || {}, cur = rc.currency || "USD";
+  const tile = (k, v, s) => `<div class="card"><div class="k">${k}</div><div class="v">${v}</div>${s ? `<div class="sub">${s}</div>` : ""}</div>`;
+  const ret = mort.repair_retention;
+  const retTxt = typeof ret === "number" ? money(ret, cur) : typeof ret === "boolean" ? (ret ? "required" : "none") : ret ? esc(ret) : "";
+  const valSub = [Array.isArray(val.impact_amount) ? "≈ " + moneyRange(val.impact_amount[0], val.impact_amount[1], cur) : "",
+    Array.isArray(val.adjusted_value) ? "Adjusted value " + moneyRange(val.adjusted_value[0], val.adjusted_value[1], cur) : "",
+    val.basis ? esc(val.basis) : ""].filter(Boolean).join("<br>");
+  const loading = ins.premium_loading_pct;
+  const flags = (ev.integrity_flags || []).map((f) => typeof f === "string" ? f : f.message || f.code);
+  const perils = ins.perils || [];
+  const g = GRADES.includes(risk.grade) ? risk.grade : "x";
+  return `
+    <div class="risk-top">
+      <div class="grade-big g-${g}" title="Condition grade">${esc(risk.grade || "?")}</div>
+      <div class="risk-score">
+        <div><b>${esc(risk.condition_score ?? "—")}</b> / 100 · ${esc(risk.grade_label || "")}</div>
+        ${risk.risk_level ? `<span class="lvl ${esc(risk.risk_level)}">${esc(risk.risk_level)} risk</span>` : ""}
+      </div>
+    </div>
+    <div class="decision ${decisionCls(risk.decision)}"><span class="k">Underwriting decision</span><b>${esc(decShort(risk.decision))}</b></div>
+    <div class="cards">
+      ${tile("Repair cost", moneyRange(rc.low, rc.high, cur))}
+      ${tile("Valuation impact", pctRange(val.impact_pct), valSub)}
+      ${tile("Premium loading", loading == null ? "—" : `${loading > 0 ? "+" : ""}${loading}%`)}
+      ${tile("Collateral risk", esc(mort.collateral_risk || "—"), retTxt ? "Repair retention: " + retTxt : "")}
+      ${tile("AI-inspected coverage", ev.coverage_pct != null ? `${ev.coverage_pct}%` : "—",
+        ev.complete === false ? "incomplete — film the gaps again" : ev.complete ? "complete" : "")}
+    </div>
+    ${flags.length ? `<div class="iwarn">Evidence integrity: ${flags.map(esc).join(" · ")}</div>` : ""}
+    ${(risk.reasons || []).length ? `<h3 class="sec-h">Why this decision</h3><ul>${risk.reasons.map((r) => `<li>${esc(r)}</li>`).join("")}</ul>` : ""}
+    ${perils.length ? `<h3 class="sec-h">Insurance perils</h3><div class="tw"><table class="wide"><thead><tr><th>Peril</th><th>Category</th>
+        <th class="num">Findings</th><th class="num">Risk pts</th><th class="num">Repair cost</th></tr></thead><tbody>
+        ${perils.map((p) => `<tr><td><b>${esc(p.label || p.peril)}</b>${p.label && p.peril ? `<br><span class="sub">${esc(p.peril)}</span>` : ""}</td>
+          <td>${esc(p.category || "")}</td><td class="num">${esc(Array.isArray(p.findings) ? p.findings.length : p.findings ?? "—")}</td>
+          <td class="num">${esc(p.risk_points ?? "—")}</td>
+          <td class="num">${Array.isArray(p.repair_cost) ? moneyRange(p.repair_cost[0], p.repair_cost[1], cur) : "—"}</td></tr>`).join("")}
+      </tbody></table></div>` : ""}
+    ${risk.disclaimer ? `<p class="sub" style="margin-top:12px">${esc(risk.disclaimer)}</p>` : ""}`;
+}
+
+async function askW(e) {
+  e.preventDefault();
+  const q = $("ask-q").value.trim();
+  if (!q || !W) return;
+  const item = document.createElement("div");
+  item.innerHTML = `<div class="q">${esc(q)}</div><div class="a md"><span class="mini-spin"></span>Gemini is thinking…</div>`;
+  $("qa").appendChild(item);
+  $("ask-q").value = ""; $("ask-q").disabled = true; $("ask-go").disabled = true;
+  try {
+    const headers = {"Content-Type": "application/json"};
+    if (KEY) headers["X-API-Key"] = KEY;
+    const r = await fetch(`/api/v1/walkthrough/${encodeURIComponent(W.name)}/ask`, {method: "POST", headers, body: JSON.stringify({question: q})});
+    let j = null; try { j = await r.json(); } catch { /* non-JSON body */ }
+    if (!r.ok) {
+      let d = j && j.detail; if (d && typeof d !== "string") d = JSON.stringify(d);
+      throw new Error(r.status === 401 || r.status === 403 ? "API key required or invalid — enter it in the console sidebar, then reload."
+        : r.status === 502 ? "Gemini error: " + (d || "the model did not answer — try again.") : d || r.statusText || `HTTP ${r.status}`);
+    }
+    item.querySelector(".a").innerHTML = mdLite(j.answer || "(no answer)");
+  } catch (err) { item.querySelector(".a").innerHTML = `<span class="err">${esc(err.message)}</span>`; }
+  finally { $("ask-q").disabled = false; $("ask-go").disabled = false; $("ask-q").focus(); }
+}
+
+fetch("walkthrough.json", {cache: "no-store"}).then((r) => r.json()).then(init).catch((e) => { $("meta").textContent = "Cannot load walkthrough.json: " + e; });
+
+function init(w) {
+  W = w;
+  const v = encodeURIComponent(w.built || Date.now());
+  for (const k of ["glb", "glb_gaps", "glb_inside"]) if (w.files[k]) w.files[k] += `?v=${v}`;
+  (w.extras?.models || []).forEach((m) => { m.file += `?v=${v}`; });
+  document.title = `${w.name} · Walkthrough · Property Inspection AI`;
+  $("title").textContent = w.name;
+  const c = w.coverage.overall;
+  $("meta").textContent = [w.mode === "lite" ? "Lite mode" : "Advanced mode", `${w.duration_s}s video`, `${w.slam_frames} SLAM frames`, `${w.keyframes.length} AI keyframes`,
+    w.property_id ? `property ${w.property_id}` : "", w.created_at ? fmtDate(w.created_at) : ""].filter(Boolean).join(" · ");
+  const r = w.risk;
+  if (r) {
+    const g = GRADES.includes(r.grade) ? r.grade : "x";
+    $("hdr-grade").innerHTML = `<span class="gb g-${g}" title="Condition grade ${esc(r.grade || "?")}">${esc(r.grade || "?")}</span>`;
+    $("hdr-dec").innerHTML = `<span class="dec ${decisionCls(r.decision)}" title="Underwriting decision">${esc(decShort(r.decision))}</span>`;
+  }
+  const area = w.rooms.reduce((a, x) => a + (x.area_m2 || 0), 0);
+  const rc = (r && r.repair_cost) || {};
+  const k1 = (k, val, s) => `<div class="k1"><div class="k">${k}</div><div class="v">${val}</div>${s ? `<div class="s">${s}</div>` : ""}</div>`;
+  $("kstrip").innerHTML =
+    (r ? k1("Condition", `${esc(r.condition_score ?? "—")}<span class="sub"> / 100</span>`, `Grade ${esc(r.grade || "?")} · ${esc(r.risk_level || "")} risk`) : "") +
+    k1("Inspectable coverage", `${c.inspectable_pct}%`, `seen ${c.seen_pct}% · AI ${c.inspected_pct ?? "—"}%`) +
+    k1("Findings", w.findings.length, `${w.findings.filter((f) => f.state === "DETECTED").length} detected · ${w.findings.filter((f) => f.state !== "DETECTED").length} to review`) +
+    k1("Floor area", `${area.toFixed(1)} m²`, w.rooms.map((x) => esc(x.name)).join(" · ")) +
+    (r ? k1("Repair cost", moneyRange(rc.low, rc.high, rc.currency), "estimate") : "") +
+    k1("Video", `${Math.round(w.duration_s)} s`, `${w.slam_frames} SLAM frames`);
+  $("risk-panel").hidden = !r;
+  if (r) $("risk").innerHTML = riskHtml(r); else $("ask-panel").style.gridColumn = "1 / -1";
+  if (w.ai_summary) { $("ai-summary").innerHTML = "<p class=\"lbl\">Gemini property summary</p>" + mdLite(w.ai_summary); $("ai-summary").hidden = false; }
+  $("ask-form").onsubmit = askW;
+  $("lnk-report").href = w.files.report; $("lnk-glb").href = w.files.glb; $("lnk-map").href = w.files.coverage_map;
+  if (w.files.live_map) $("live").src = w.files.live_map; else $("live").hidden = true;
+  $("final").src = w.files.coverage_map;
+  document.querySelectorAll(".tabs button[data-v]").forEach((b) => b.onclick = () => {
+    document.querySelectorAll(".tabs button[data-v]").forEach((x) => x.classList.toggle("on", x === b));
+    const live = b.dataset.v === "live"; $("live").hidden = !live; $("final").hidden = live; if (!live) $("live").pause();
+  });
+  const ex = w.extras || {models: [], maps: [], videos: [], keyframes: []};
+  const gtabs = document.querySelector(".tabs button[data-g]").parentElement;
+  gtabs.classList.add("wrap");
+  ex.models.forEach((m) => gtabs.insertAdjacentHTML("beforeend", `<button type="button" data-g="${esc(m.file)}">${esc(m.label)}</button>`));
+  const modelTabs = () => document.querySelectorAll(".tabs button[data-g], .tabs button[data-mode]");
+  document.querySelectorAll(".tabs button[data-g]").forEach((b) => b.onclick = () => {
+    modelTabs().forEach((x) => x.classList.toggle("on", x === b));
+    leaveInside();
+    const own = b.dataset.g in w.files;              // finding pins only belong to the inspection GLBs
+    $("mv").src = own ? w.files[b.dataset.g] : b.dataset.g;
+    document.querySelectorAll(".hotspot").forEach((h) => h.hidden = !own);
+    $("mv-legend").hidden = !own || !w.findings.length;
+  });
+  const srcVid = (ex.videos.find((x) => x.file === "source_video.mp4") || {}).file;
+  if (w.camera && w.camera.path.length && srcVid) {
+    $("btn-inside").hidden = false;
+    $("pip").src = srcVid;
+    $("btn-inside").onclick = () => { modelTabs().forEach((x) => x.classList.toggle("on", x === $("btn-inside"))); enterInside(); };
+    $("pip").addEventListener("seeked", () => setCam($("pip").currentTime, true));
+    $("pip").addEventListener("loadeddata", () => { if (inside) setCam($("pip").currentTime, true); });
+    const m = location.hash.match(/inside=([\d.]+)/);
+    if (m) { enterInside(); $("pip").currentTime = +m[1]; setCam(+m[1], true); }
+  }
+  extras(ex);
+  $("rep").dataset.src = w.files.report;
+  $("rep-box").addEventListener("toggle", () => { if ($("rep-box").open && !$("rep").src) $("rep").src = $("rep").dataset.src; });
+  $("warnings").innerHTML = (w.warnings || []).map((x) => `<div class="wbanner">⚠ ${esc(x)}</div>`).join("");
+  setupModel(w);
+  cards(w.coverage, null);
+  chart(w.series);
+  $("live").addEventListener("timeupdate", () => liveStats($("live").currentTime / Math.max(0.001, $("live").duration)));
+  $("live").addEventListener("ended", () => cards(w.coverage, null));
+
+  $("f-count").textContent = w.findings.length ? `· ${w.findings.length}` : "";
+  $("mv-legend").hidden = !w.findings.length;
+  $("findings").innerHTML = w.findings.length ? w.findings.map((f) => `
+    <button type="button" class="fitem" data-n="${f.n}" aria-label="Finding ${f.n}: ${esc(f.component)} ${esc(f.defect)}, ${esc(LBL[f.state] || f.state)}. Show in 3D">
+      <span class="n ${esc(f.state)}">${f.n}</span>${f.crop ? `<img src="${esc(f.crop)}" alt="" loading="lazy">` : `<span></span>`}
+      <span style="min-width:0"><span class="t">${esc(f.component)} · ${esc(f.defect)} <span class="pill ${esc(f.state)}">${esc(LBL[f.state] || f.state)}</span></span>
+        <span class="d" style="display:block">${esc(f.description)}</span>
+        ${f.review_reasons.length ? `<span class="w" style="display:block"><b>Why review:</b> ${esc(f.review_reasons.join(" "))}</span>` : ""}
+        <span class="w" style="display:block">${esc(f.surface_label || "-")} · t = ${f.time_s}s · ${f.camera_distance_m ?? "?"} m from camera</span>
+        ${secondOpinion(f.validation)}</span>
+    </button>`).join("")
+    : `<div class="empty">No visible defects confirmed in the AI keyframes.</div>`;
+  document.querySelectorAll(".fitem").forEach((el) => el.onclick = () => focusFinding(+el.dataset.n));
+
+  $("gaps").innerHTML = w.gaps.length ? w.gaps.map((g) => `<li><b>${esc(g.label)}</b><span class="sub">${g.length_m ? `${g.length_m} m of wall` : `${g.uncovered_m2} m² not inspectable`}</span></li>`).join("")
+    : "<li>Everything was seen at inspection quality.</li>";
+  $("surfaces").innerHTML = Object.values(w.coverage.by_group).map((s) =>
+    `<tr><td>${esc(s.label)}</td><td class="num">${s.seen_pct}%</td><td class="num">${s.inspectable_pct}%</td><td class="num">${s.inspected_pct}%</td></tr>`).join("");
+}
+
+function secondOpinion(v) {
+  if (!v) return "";
+  const ok = v.agrees === true, bad = v.agrees === false;
+  return `<span class="so ${ok ? "agree" : bad ? "dispute" : ""}">${ok ? "✔" : bad ? "✖" : "?"} Gemini second opinion: ` +
+    `<b>${ok ? "agrees" : bad ? "disputes" : "inconclusive"}</b>${v.alternative && bad ? ` (${esc(v.alternative)})` : ""}</span>`;
+}
+
+function tabbed(tabsEl, items, show) {
+  tabsEl.innerHTML = items.map((x, i) => `<button type="button" class="${i ? "" : "on"}" data-i="${i}">${esc(x.label)}</button>`).join("");
+  tabsEl.querySelectorAll("button").forEach((b) => b.onclick = () => {
+    tabsEl.querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b));
+    show(items[+b.dataset.i]);
+  });
+  if (items.length) show(items[0]);
+}
+
+function extras(ex) {
+  if (ex.maps.length) $("slam-row").hidden = false;
+  tabbed($("vid-tabs"), ex.videos, (v) => { $("vid").src = v.file; });
+  if (!ex.videos.length) $("vid-panel").hidden = true;
+  tabbed($("map-tabs"), ex.maps, (m) => { $("map-img").src = m.file; $("map-img").alt = m.label; $("map-link").href = m.file; });
+  if (!ex.keyframes.length) return;
+  $("kf-panel").hidden = false;
+  const ok = ex.keyframes.filter((k) => k.status === "done").length;
+  $("kf-sub").textContent = `${ex.keyframes.length} frames chosen to cover the most surface · ${ok} inspected`;
+  $("kf").innerHTML = ex.keyframes.map((k) => {
+    const img = k.annotated || k.image;
+    const pill = k.status !== "done" ? `<span class="pill fail">${esc(k.status)}</span>`
+      : k.n_detected ? `<span class="pill DETECTED">${k.n_detected} detected</span>`
+      : k.n_review ? `<span class="pill NEEDS_REVIEW">${k.n_review} to review</span>` : `<span class="pill ok">no defects</span>`;
+    return `<div class="kf"><a href="${esc(img)}" target="_blank" rel="noopener"><img src="${esc(img)}" alt="Keyframe at ${k.time_s}s" loading="lazy"></a>
+      <div class="cap"><div class="r1"><b>t = ${k.time_s}s</b>${pill}</div>
+      <div class="sub">${esc(k.inspection_id)}${k.room ? " · " + esc(k.room) : ""}${k.error ? " · " + esc(k.error) : ""}</div>
+      ${k.status === "done" ? `<a href="${esc(k.report)}" target="_blank" rel="noopener">Frame report ↗</a>` : ""}</div></div>`;
+  }).join("");
+}
+
+function modelTabs0() {   // back to the "Full model" tab
+  document.querySelectorAll(".tabs button[data-g], .tabs button[data-mode]").forEach((x) => x.classList.toggle("on", x.dataset.g === "glb"));
+  if ($("mv").getAttribute("src") !== W.files.glb) $("mv").src = W.files.glb;
+  document.querySelectorAll(".hotspot").forEach((h) => h.hidden = false);
+  $("mv-legend").hidden = !W.findings.length;
+}
+
+// Pin head: f.tip (backend de-clutters nearby pins); fallback = defect point + normal * 0.4 m.
+function pinPos(f) {
+  if (Array.isArray(f.tip) && f.tip.length === 3) return f.tip;
+  const n = f.normal || [0, 1, 0];
+  return f.xyz.map((v, i) => v + n[i] * 0.4);
+}
+
+function setupModel(w) {
+  const mv = $("mv");
+  if (!inside) mv.src = w.files.glb;            // a #inside=<t> link already loaded the walk-inside model
+  for (const f of w.findings) {
+    if (!f.xyz && !f.tip) continue;
+    const n = f.normal || [0, 1, 0];
+    const tip = pinPos(f);
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = `hotspot ${f.state}`; b.slot = `hotspot-${f.n}`;
+    b.dataset.position = `${tip[0]}m ${tip[1]}m ${tip[2]}m`; b.dataset.normal = `${n[0]}m ${n[1]}m ${n[2]}m`;
+    const so = f.validation ? (f.validation.agrees === true ? " · Gemini agrees" : f.validation.agrees === false ? " · Gemini disputes" : "") : "";
+    const tipTxt = `${f.component} · ${f.defect} · ${LBL[f.state] || f.state}${so}`;
+    b.setAttribute("aria-label", `Finding ${f.n}: ${tipTxt}`);
+    b.innerHTML = `${f.n}<span class="tip">${esc(tipTxt)}</span>`;
+    b.onclick = () => focusFinding(f.n);
+    mv.appendChild(b);
+  }
+}
+
+// ---- "walk inside": the browser camera follows the SLAM camera of the video (same view as the video frame)
+let inside = false, rafId = 0;
+function enterInside() {
+  const mv = $("mv");
+  inside = true;
+  const g = W.files.glb_inside || W.files.glb;     // clean room + pins, no SLAM overlays in front of the lens
+  if (mv.getAttribute("src") !== g) mv.src = g;
+  document.querySelectorAll(".hotspot").forEach((h) => h.hidden = false);
+  $("pip").hidden = false; $("pip-lbl").hidden = false; $("mv-legend").hidden = true;
+  mv.fieldOfView = `${W.camera.fov_v_deg}deg`;
+  mv.interpolationDecay = 40;
+  setCam($("pip").currentTime || 0, true);
+  const loop = () => { if (!inside) return; if (!$("pip").paused) setCam($("pip").currentTime, false); rafId = requestAnimationFrame(loop); };
+  cancelAnimationFrame(rafId); rafId = requestAnimationFrame(loop);
+}
+function leaveInside() {
+  if (!inside) return;
+  inside = false; cancelAnimationFrame(rafId);
+  $("pip").pause(); $("pip").hidden = true; $("pip-lbl").hidden = true; $("mv-legend").hidden = !W.findings.length;
+  const mv = $("mv");
+  mv.interpolationDecay = 50; mv.fieldOfView = "35deg";
+  mv.cameraTarget = "auto auto auto"; mv.cameraOrbit = "30deg 55deg auto";
+}
+function poseAt(t) {
+  const P = W.camera.path;
+  let lo = 0, hi = P.length - 1;
+  if (t <= P[0].t) return P[0];
+  if (t >= P[hi].t) return P[hi];
+  while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (P[mid].t <= t) lo = mid; else hi = mid; }
+  const a = P[lo], b = P[hi], u = (t - a.t) / Math.max(1e-6, b.t - a.t);
+  const mix = (x, y) => x.map((v, i) => v + (y[i] - v) * u);
+  return {t, p: mix(a.p, b.p), f: mix(a.f, b.f)};
+}
+function setCam(t, jump) {
+  if (!inside || !W.camera) return;
+  const {p, f} = poseAt(t);
+  const n = Math.hypot(...f) || 1, d = f.map((v) => v / n), r = 0.6;
+  const tgt = p.map((v, i) => v + d[i] * r);
+  const phi = Math.acos(Math.max(-1, Math.min(1, -d[1]))) * 180 / Math.PI;   // camera offset from target = -d
+  const theta = Math.atan2(-d[0], -d[2]) * 180 / Math.PI;
+  const mv = $("mv");
+  mv.cameraTarget = `${tgt[0]}m ${tgt[1]}m ${tgt[2]}m`;
+  mv.cameraOrbit = `${theta}deg ${phi}deg ${r}m`;
+  if (jump && mv.jumpCameraToGoal) mv.jumpCameraToGoal();
+  $("pip-t").textContent = t.toFixed(1);
+}
+
+// Fly to a finding: target the defect point on the surface (f.xyz), camera placed along the surface normal so it looks at it head-on.
+function focusFinding(n) {
+  leaveInside();
+  modelTabs0();
+  const f = W.findings.find((x) => x.n === n); if (!f) return;
+  const p = f.xyz || pinPos(f);
+  const mv = $("mv");
+  const nr = f.normal || [0, 1, 0], len = Math.hypot(...nr) || 1, d = nr.map((v) => v / len);
+  const theta = Math.atan2(d[0], d[2]) * 180 / Math.PI;
+  let phi = Math.acos(Math.max(-1, Math.min(1, d[1]))) * 180 / Math.PI;
+  phi = Math.max(25, Math.min(150, phi));          // floors / ceilings: look from an angle, not straight down
+  mv.cameraTarget = `${p[0]}m ${p[1]}m ${p[2]}m`;
+  mv.cameraOrbit = `${theta.toFixed(1)}deg ${phi.toFixed(1)}deg 2.2m`;
+  document.querySelectorAll(".hotspot").forEach((h) => h.classList.toggle("sel", h.slot === `hotspot-${n}`));
+  document.querySelectorAll(".fitem").forEach((el) => el.classList.toggle("sel", +el.dataset.n === n));
+  const r = mv.getBoundingClientRect();
+  if (r.top < 60 || r.bottom > innerHeight) mv.scrollIntoView({behavior: "smooth", block: "center"});
+}
+
+function cards(cov, t) {
+  const k = cov.by_kind, o = cov.overall;
+  const card = (name, s) => `<div class="card"><div class="k">${name}</div><div class="v">${s.inspectable_pct}%</div>
+    <div class="sub">inspectable · seen ${s.seen_pct}%${s.inspected_pct !== undefined ? ` · AI ${s.inspected_pct}%` : ""}</div>
+    <div class="bar"><i class="s" style="width:${s.seen_pct}%"></i><i class="g" style="width:${s.inspectable_pct}%"></i></div></div>`;
+  $("cards").innerHTML = card("Overall", o) + card("Walls", k.walls) + card("Floor", k.floor) + card("Ceiling", k.ceiling);
+  $("tnow").textContent = t === null ? "· end of walk" : `· at t = ${t.toFixed(1)} s`;
+}
+
+function liveStats(frac) {
+  const s = W.series; if (!s.length) return;
+  const p = s[Math.min(s.length - 1, Math.max(0, Math.round(frac * (s.length - 1))))];
+  cards({overall: {seen_pct: p.overall_seen, inspectable_pct: p.overall_inspectable},
+         by_kind: {walls: {seen_pct: p.walls_seen, inspectable_pct: p.walls_inspectable},
+                   floor: {seen_pct: p.floor_seen, inspectable_pct: p.floor_inspectable},
+                   ceiling: {seen_pct: p.ceiling_seen, inspectable_pct: p.ceiling_inspectable}}}, p.t);
+  const x = (p.t / Math.max(0.001, s[s.length - 1].t)) * 1000;
+  const cur = $("chart").querySelector(".cursor"); if (cur) { cur.setAttribute("x1", x); cur.setAttribute("x2", x); }
+}
+
+function chart(s) {
+  if (!s.length) return;
+  const T = s[s.length - 1].t || 1, X = (t) => (t / T) * 1000, Y = (v) => 130 - v * 1.2;
+  const line = (key) => s.map((p, i) => `${i ? "L" : "M"}${X(p.t).toFixed(1)},${Y(p[key]).toFixed(1)}`).join("");
+  $("chart").innerHTML = `
+    ${[0, 25, 50, 75, 100].map((v) => `<line x1="0" x2="1000" y1="${Y(v)}" y2="${Y(v)}" stroke="currentColor" stroke-opacity=".12"/>
+      <text x="4" y="${Y(v) - 2}" font-size="10" fill="currentColor" fill-opacity=".6">${v}%</text>`).join("")}
+    <path d="${line("overall_seen")}" fill="none" stroke="#f59e0b" stroke-width="2.5" vector-effect="non-scaling-stroke"/>
+    <path d="${line("overall_inspectable")}" fill="none" stroke="#16a34a" stroke-width="2.5" vector-effect="non-scaling-stroke"/>
+    ${W.keyframes.map((k) => `<line x1="${X(k.time_s)}" x2="${X(k.time_s)}" y1="126" y2="134" stroke="#b400b4" stroke-width="2" vector-effect="non-scaling-stroke"/>`).join("")}
+    <line class="cursor" x1="0" x2="0" y1="0" y2="140" stroke="currentColor" stroke-opacity=".5" vector-effect="non-scaling-stroke"/>`;
+}
+</script>
+</body>
+</html>

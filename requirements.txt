@@ -1,0 +1,35 @@
+# Property Inspection AI (Google Cloud edition) - ONE environment for the app + 3D engine.
+# GPU build (Cloud Run L4 / local NVIDIA): torch from the CUDA 12.4 index (Dockerfile / setup scripts add it).
+torch==2.5.1
+torchvision==0.20.1
+
+# 3D engine (Depth Anything 3 + SLAM + room model + maps)
+numpy==2.2.6
+opencv-contrib-python-headless==5.0.0.93
+open3d==0.19.0          # 0.20 ScalableTSDFVolume returns empty meshes
+trimesh==5.1.0
+scipy==1.17.1
+pillow==12.3.0
+einops==0.8.2
+addict==2.4.0
+omegaconf==2.3.1
+huggingface_hub==1.32.0
+safetensors==0.8.0
+imageio==2.37.4
+imageio-ffmpeg==0.6.0
+plyfile==1.1.5
+
+# App (FastAPI + Gemini)
+fastapi==0.141.1
+hypercorn==0.18.0       # serves HTTP/2 cleartext (h2c): Cloud Run --use-http2 lifts the 32 MiB HTTP/1 request cap
+uvicorn[standard]==0.54.0   # optional HTTP/1-only alternative for local debugging
+pydantic==2.13.5
+PyYAML==6.0.3
+python-multipart==0.0.32
+Jinja2==3.1.6
+google-genai==2.29.0
+
+# Google Cloud integrations (all optional at runtime; enabled by env vars)
+google-cloud-storage
+google-cloud-bigquery
+google-cloud-pubsub

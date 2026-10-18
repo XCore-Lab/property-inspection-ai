@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Property Inspection AI</title>
+<meta name="description" content="AI property inspection, risk and valuation console for insurers, lenders and valuers.">
+<script>
+  // Theme before first paint (stored choice wins over prefers-color-scheme).
+  (function () { try { var t = localStorage.getItem("pi_theme"); if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); } catch (e) {} })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Archivo (variable width + weight) loads without blocking rendering / scripts (falls back to system fonts offline). -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="/static/styles.css?v=19">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='black'/%3E%3Cpath d='M8 15.5 16 9l8 6.5V24H8z' fill='none' stroke='%23f6f4ed' stroke-width='2.4' stroke-linejoin='round'/%3E%3Cpath d='m12.5 18.5 2.5 2.5 4.5-5' fill='none' stroke='%23f6f4ed' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-dash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></symbol>
+    <symbol id="i-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7.5 6.5H4.5A2 2 0 0 0 2.5 8.5v9a2 2 0 0 0 2 2h15a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+    <symbol id="i-video" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="13" height="12" rx="2"/><path d="m15.5 10.5 6-3.5v10l-6-3.5"/></symbol>
+    <symbol id="i-cube" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="m8.5 14 2.5 2.5 4.5-5"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5M12 3v12"/></symbol>
+    <symbol id="i-scan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-scale" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M7 21h10M3 7h18M6 7l-3 7a4 4 0 0 0 6 0zM18 7l-3 7a4 4 0 0 0 6 0z"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V4M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1"/></symbol>
+    <symbol id="i-coin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.5-1-1.6-1.5-3-1.5-1.7 0-3 .9-3 2s1 1.7 3 2 3 .9 3 2-1.3 2-3 2c-1.4 0-2.5-.5-3-1.5M12 6.5v11"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></symbol>
+    <symbol id="i-refer" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></symbol>
+    <symbol id="i-doc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></symbol>
+    <symbol id="i-code" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4L21 8"/><path d="M21 3v5h-5"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3"/></symbol>
+  </defs>
+</svg>
+
+<div class="app">
+  <aside class="sidebar" aria-label="Main navigation">
+    <a class="brand" href="#/dashboard" aria-label="Property Inspection AI - dashboard">
+      <span class="brand-mark"><svg><use href="#i-home"/></svg></span>
+      <span><span class="brand-name">Property Inspection AI</span><br><span class="brand-sub">Underwriting console</span></span>
+    </a>
+    <nav class="nav">
+      <a class="navlink" id="nav-dashboard" href="#/dashboard"><svg><use href="#i-dash"/></svg>Dashboard</a>
+      <a class="navlink" id="nav-walkthroughs" href="#/walkthroughs"><svg><use href="#i-video"/></svg>Video walkthroughs<span class="count" id="nav-walk-count"></span><span class="live" id="nav-walk-live" hidden title="Walkthrough processing"></span></a>
+    </nav>
+    <div class="side-foot">
+      <label id="key-box" class="keybox" hidden>API key
+        <input id="api-key" type="password" autocomplete="off" placeholder="Paste API key" spellcheck="false">
+      </label>
+      <div class="status" aria-live="polite">
+        <div class="status-head"><b>System status</b><span id="health" class="health" title="Backend status">checking…</span></div>
+        <ul class="models" id="models"></ul>
+        <div class="vram" id="vram" hidden><div class="row"><span id="gpu-name">GPU</span><span id="vram-txt"></span></div><div class="meter"><i id="vram-bar"></i></div></div>
+        <div class="queue-line"><span id="queue-txt">Queue —</span><a href="/docs" target="_blank" rel="noopener">API docs</a></div>
+      </div>
+      <div class="side-actions">
+        <button id="theme-btn" class="icon-btn" type="button" aria-label="Switch colour theme"><svg><use href="#i-moon"/></svg><span>Dark</span></button>
+        <span class="side-meta">Google Cloud · BFSI</span>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main" id="main">
+    <div id="error" class="error" hidden role="alert" style="max-width:1320px;margin:0 auto 16px"></div>
+
+    <!-- ================= DASHBOARD ================= -->
+    <section class="view" id="view-dashboard" hidden>
+      <div class="page-head">
+        <div>
+          <h1>Dashboard</h1>
+          <p>Condition grade, underwriting decision and repair exposure for every property inspected from a video walkthrough.</p>
+        </div>
+        <div class="actions">
+          <button id="pf-refresh" class="ghost" type="button"><svg><use href="#i-refresh"/></svg>Refresh</button>
+          <a class="btn" href="#/walkthroughs/new"><svg><use href="#i-plus"/></svg>New walkthrough</a>
+        </div>
+      </div>
+      <div id="pf-err" class="error" hidden></div>
+      <div class="kpis big" id="pf-kpis"></div>
+      <div>
+        <div class="card-head"><h2>Recent walkthroughs</h2><a href="#/walkthroughs" class="small">All walkthroughs</a></div>
+        <div class="wcards" id="dash-walks"></div>
+      </div>
+      <div class="grid-3">
+        <div class="card"><div class="card-head"><h2>Condition grade</h2><span class="sub">A (best) → E</span></div><div class="gbars" id="pf-grades"></div></div>
+        <div class="card"><div class="card-head"><h2>Risk level</h2></div><div id="pf-risk"></div></div>
+        <div class="card"><div class="card-head"><h2>Underwriting decisions</h2></div><div class="dec-bars" id="pf-dec"></div></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>All walkthroughs</h2><span class="sub">Click a column to sort, click a row to open the 3D report</span></div>
+        <div class="tbl-wrap inset scroll"><table class="tbl pf"><thead id="pf-head"></thead><tbody id="pf-rows"></tbody></table></div>
+      </div>
+      <p class="muted small">Rows also stream to BigQuery when configured<span id="pf-bq"></span>.</p>
+    </section>
+
+    <!-- ================= WALKTHROUGHS ================= -->
+    <section class="view" id="view-walkthroughs" hidden>
+      <div class="page-head">
+        <div>
+          <h1>Video walkthroughs</h1>
+          <p>Depth Anything 3 + OpenCV SLAM turn a phone video into a 3D model, floor plan and coverage map; the AI inspects keyframes and pins every finding in 3D.</p>
+        </div>
+      </div>
+      <div id="walk-run-slot"></div>
+      <div class="split">
+        <div class="wcards" id="walks" style="align-content:start"></div>
+        <form id="walk-form" class="card">
+          <div class="card-head"><h2>New walkthrough</h2></div>
+          <div id="walk-drop" class="drop" tabindex="0" role="button" aria-label="Choose a walkthrough video, or drop one here" style="min-height:160px">
+            <input id="walk-file" type="file" accept="video/*" hidden>
+            <span class="up-ico"><svg><use href="#i-video"/></svg></span>
+            <div class="t1" id="walk-drop-text">Drop a video here or <u>browse</u></div>
+            <div class="t2">Walk slowly, film every wall, floor and ceiling</div>
+          </div>
+          <label class="field" style="margin-top:16px">Property ID <span class="hint">optional</span>
+            <input id="walk-property" placeholder="e.g. P001" autocomplete="off">
+          </label>
+          <div class="field" style="margin-top:16px">Inspection mode
+            <div class="modes" role="radiogroup" aria-label="Inspection mode">
+              <label class="mode"><input type="radio" name="walk-mode" value="lite"><span><b>Lite</b><small>Faster 3D build · same AI inspection</small></span></label>
+              <label class="mode"><input type="radio" name="walk-mode" value="advanced" checked><span><b>Advanced</b><small>Full-detail 3D · preview videos</small></span></label>
+            </div>
+          </div>
+          <button id="walk-go" type="submit" disabled style="width:100%;margin-top:16px"><svg><use href="#i-cube"/></svg>Map &amp; inspect video</button>
+          <p class="muted small" id="walk-status" style="margin-top:12px">Builds a 3D model, floor plan and coverage map, then the AI inspects the keyframes. Both modes use the same AI models; Lite only builds the 3D model faster.</p>
+        </form>
+      </div>
+    </section>
+
+    <!-- ================= INSPECTION DETAIL ================= -->
+    <section class="view" id="view-inspection" hidden>
+      <div>
+        <div class="crumbs"><a href="#/dashboard">Inspections</a><span>/</span><span id="r-crumb">—</span></div>
+        <div class="hero">
+          <div style="min-width:0">
+            <h1 id="r-title">—</h1>
+            <div class="hero-meta" id="r-meta"></div>
+            <div class="hero-chips" id="r-chips"></div>
+          </div>
+          <div class="grade-panel" id="r-grade" hidden></div>
+        </div>
+      </div>
+      <div id="ins-run-slot"></div>
+      <div id="results" class="stack" hidden>
+        <div id="r-decision"></div>
+        <div class="split">
+          <div class="stack">
+            <div class="card">
+              <div class="card-head">
+                <div class="tabs viewer-tabs" role="tablist" aria-label="Image view">
+                  <button data-kind="annotated" class="on" type="button" role="tab">Annotated</button>
+                  <button data-kind="annotated_debug" type="button" role="tab">With rejected</button>
+                  <button data-kind="original" type="button" role="tab">Original</button>
+                </div>
+                <div class="actions">
+                  <a id="btn-report" class="btn ghost" target="_blank" rel="noopener"><svg><use href="#i-doc"/></svg>Report</a>
+                  <a id="btn-md" class="btn ghost" target="_blank" rel="noopener">Markdown</a>
+                  <button id="btn-json" class="ghost" type="button"><svg><use href="#i-code"/></svg>JSON</button>
+                </div>
+              </div>
+              <div id="quality" class="warn" hidden style="margin-bottom:12px"></div>
+              <div class="viewer-img"><img id="r-img" alt="Inspection photo with detected defects outlined"></div>
+            </div>
+            <div class="card">
+              <div class="card-head"><h2>Findings <span class="sub" id="issues-count"></span></h2>
+                <span class="sub">LocateAnything boxes + Gemma 4 verification</span></div>
+              <div id="issues" class="issues"></div>
+            </div>
+            <div class="grid-2 comp-grid">
+              <div class="card">
+                <div class="card-head"><h2>Components</h2></div>
+                <div class="tbl-wrap boxed"><table class="tbl top"><thead><tr><th>Component</th><th>Visible condition</th><th>Status</th></tr></thead><tbody id="components"></tbody></table></div>
+              </div>
+              <div class="card">
+                <div class="card-head"><h2>Manual checks</h2><span class="sub">Never judged from a photo</span></div>
+                <ul id="manual" class="manual"></ul>
+                <h3 id="unk-h" class="sec-h" hidden>Unknown / unverified</h3>
+                <ul id="unknown" class="unknown"></ul>
+              </div>
+            </div>
+            <details id="json-box" class="card json"><summary>Structured JSON</summary><pre id="json"></pre></details>
+          </div>
+          <div class="stack">
+            <div class="card" id="risk-card" hidden>
+              <div class="card-head"><h2>Risk &amp; valuation</h2><span class="ai-badge">Risk engine</span></div>
+              <div id="risk" class="risk"></div>
+            </div>
+            <div class="card" id="integrity-card" hidden>
+              <div class="card-head"><h2>Evidence integrity</h2><svg width="18" height="18" style="color:var(--text-3)"><use href="#i-shield"/></svg></div>
+              <div id="integrity"></div>
+            </div>
+            <div class="card" id="ask-card">
+              <div class="card-head"><h2>Ask Gemini</h2><span class="ai-badge"><svg width="12" height="12"><use href="#i-spark"/></svg>Underwriting assistant</span></div>
+              <button id="btn-summary" type="button"><svg><use href="#i-spark"/></svg>Generate underwriter summary</button>
+              <div id="summary" class="md" hidden></div>
+              <div id="qa" class="qa"></div>
+              <div class="suggest" id="suggest">
+                <button type="button">Which finding drives the repair cost?</button>
+                <button type="button">What should the surveyor check on site?</button>
+                <button type="button">Is the evidence sufficient to proceed?</button>
+              </div>
+              <form id="ask-form" class="ask-form">
+                <input id="ask-q" placeholder="Ask about this inspection…" autocomplete="off" maxlength="500" aria-label="Question for Gemini">
+                <button id="ask-go" type="submit">Ask</button>
+              </form>
+              <div id="ask-err" class="error" hidden style="margin-top:10px"></div>
+            </div>
+          </div>
+        </div>
+        <p class="disclaimer" id="disclaimer"></p>
+      </div>
+    </section>
+
+    <!-- ================= RUNNING (moved into the active view by app.js) ================= -->
+    <div class="card" id="running" hidden>
+      <div class="run-card">
+        <div style="min-width:0">
+          <div class="run-head">
+            <div class="spinner" aria-hidden="true"></div>
+            <div style="min-width:0">
+              <h2><span id="run-title">Inspecting</span><span class="dots" aria-hidden="true"><i>.</i><i>.</i><i>.</i></span></h2>
+              <div class="muted small"><span id="run-stage">Queued</span> · <span id="run-elapsed">0 s</span></div>
+            </div>
+          </div>
+          <div class="bar" id="run-bar"><span></span></div>
+          <div class="run-progress" id="run-progress" aria-live="polite"></div>
+          <div class="scan" id="run-scan" style="margin-top:16px">
+            <img id="run-img" alt="Photo being inspected">
+            <video id="run-vid" muted loop playsinline hidden></video>
+            <div class="scan-grid" aria-hidden="true"></div>
+            <div class="scanline" aria-hidden="true"></div>
+            <div class="scan-frame" aria-hidden="true"></div>
+            <span class="ping" style="--x:23%;--y:36%;--d:0s" aria-hidden="true"></span>
+            <span class="ping" style="--x:67%;--y:28%;--d:.9s" aria-hidden="true"></span>
+            <span class="ping" style="--x:44%;--y:62%;--d:1.8s" aria-hidden="true"></span>
+            <span class="ping" style="--x:81%;--y:57%;--d:2.6s" aria-hidden="true"></span>
+            <span class="ping" style="--x:31%;--y:74%;--d:3.5s" aria-hidden="true"></span>
+            <span class="ping" style="--x:58%;--y:44%;--d:4.3s" aria-hidden="true"></span>
+            <span class="scan-hud" id="scan-hud" hidden></span>
+            <span class="scan-tag" id="scan-tag">AI analysing</span>
+          </div>
+          <pre id="run-log" class="run-log" hidden></pre>
+        </div>
+        <div>
+          <h3 class="sec-h" style="margin-top:0">Pipeline</h3>
+          <ol id="photo-steps" class="steps">
+            <li data-stage="queued"><span class="st">Queued<small>Waiting for a worker</small></span></li>
+            <li data-stage="scene"><span class="st">Room &amp; components<small>Gemini 3.8 Flash</small></span></li>
+            <li data-stage="localization"><span class="st">Locating defects<small>LocateAnything-3B · local GPU</small></span></li>
+            <li data-stage="verification"><span class="st">Verifying crops<small>Gemma 4 E4B · local GPU</small></span></li>
+            <li data-stage="reporting"><span class="st">Risk &amp; report<small>Grade, perils, valuation, integrity</small></span></li>
+          </ol>
+          <ol id="walk-steps" class="steps" hidden>
+            <li data-step="upload"><span class="st">Uploading video<small>To the inspection server</small></span></li>
+            <li data-step="slam"><span class="st">3D engine<small>Depth Anything 3 + OpenCV SLAM (longest step)</small></span></li>
+            <li data-step="coverage"><span class="st">Coverage &amp; floor plan<small>What was seen at inspection quality</small></span></li>
+            <li data-step="ai"><span class="st">AI inspection of keyframes<small>LocateAnything + Gemma 4 + Gemini</small></span></li>
+            <li data-step="render"><span class="st">3D models &amp; risk report<small>Findings pinned in 3D, live map video</small></span></li>
+          </ol>
+          <p class="run-note" id="run-note"></p>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<div class="toast" id="toast" hidden role="status"></div>
+<script src="/static/app.js?v=17"></script>
+</body>
+</html>

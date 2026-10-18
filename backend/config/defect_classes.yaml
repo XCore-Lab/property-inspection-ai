@@ -1,0 +1,247 @@
+# Property-inspection taxonomy + prompt router config (Phases 4 & 5).
+#
+# Design rules
+#   * room, component and defect are ORTHOGONAL: never "bathroom_wall_crack";
+#     use room=bathroom, component=wall, defect=crack.
+#   * Each component lists the defects that can be VISUALLY checked, the phrases
+#     sent to the open-vocabulary localizer for each defect, and the functional
+#     checks that can never be decided from a photo (manual_checks).
+#   * `structural: true` defects always carry a professional-review note: the
+#     system reports the visible symptom only, never structural significance.
+#   * `tier` = mvp | v2 (spec section 27). Both are enabled by default; set
+#     router.enabled_tiers to [mvp] to restrict to the V1 scope.
+
+version: 1
+
+rooms:
+  kitchen:      {label: Kitchen,      aliases: [kitchen, kitchenette, pantry, galley]}
+  bathroom:     {label: Bathroom,     aliases: [bathroom, washroom, restroom, toilet, shower room, ensuite, wc, lavatory]}
+  bedroom:      {label: Bedroom,      aliases: [bedroom, master bedroom, guest room, nursery]}
+  living_room:  {label: Living Room,  aliases: [living room, lounge, family room, sitting room, hall, drawing room]}
+  dining_room:  {label: Dining Room,  aliases: [dining room, dining area]}
+  corridor:     {label: Corridor,     aliases: [corridor, hallway, entrance, entryway, foyer, stairs, staircase, landing, passage]}
+  laundry:      {label: Laundry,      aliases: [laundry, utility room]}
+  unknown:      {label: Unknown Room, aliases: [unknown, other, room, interior]}
+
+# Components expected per room when the VLM is unsure / as router hints.
+room_components:
+  kitchen:     [countertop, cupboard, cupboard_lock, wall_tile, floor_tile, grout, wall, ceiling, exhaust_hood, window, door, molding]
+  bathroom:    [floor_tile, wall_tile, grout, wall, ceiling, door, door_lock, window, cupboard]
+  bedroom:     [wall, ceiling, floor, rug, door, door_lock, window, molding, cupboard, cupboard_lock]
+  living_room: [wall, ceiling, floor, floor_tile, rug, door, door_lock, window, molding]
+  dining_room: [wall, ceiling, floor, floor_tile, rug, door, window, molding]
+  corridor:    [wall, ceiling, floor, floor_tile, rug, door, door_lock, molding]
+  laundry:     [wall, ceiling, floor_tile, wall_tile, grout, door, cupboard]
+  unknown:     [wall, ceiling, floor, floor_tile, door, window]
+
+defects:
+  crack:          {label: Crack,             structural: true}
+  chip:           {label: Chip}
+  missing:        {label: Missing / absent}
+  stain:          {label: Stain}
+  water_damage:   {label: Water damage}
+  peeling_paint:  {label: Peeling paint}
+  hole:           {label: Hole}
+  mold:           {label: Visible mold}
+  surface_damage: {label: Surface damage}
+  missing_grout:  {label: Missing grout}
+  discoloration:  {label: Discoloration}
+  scratch:        {label: Scratch}
+  burn_mark:      {label: Burn mark}
+  detached:       {label: Detached / loose}
+  rust:           {label: Rust / corrosion}
+  misalignment:   {label: Visible misalignment}
+  grease_buildup: {label: Grease buildup}
+  broken:         {label: Broken component}
+  broken_glass:   {label: Broken / cracked glass}
+  tear:           {label: Tear}
+  worn:           {label: Worn area}
+  deformation:    {label: Visible deformation, structural: true}
+
+components:
+  wall:
+    label: Wall
+    aliases: [wall, walls, painted wall, plaster wall, drywall, partition]
+    tier: mvp
+    prompts:
+      crack:         [wall crack, crack in wall]
+      stain:         [wall stain]
+      water_damage:  [water stain on wall]
+      peeling_paint: [peeling paint]
+      hole:          [hole in wall]
+      mold:          [mold on wall]
+      surface_damage: [damaged wall surface]
+      discoloration: [discolored wall, yellowed wall patch]
+      scratch:       [wall scratch, scuff marks on wall]
+  ceiling:
+    label: Ceiling
+    aliases: [ceiling, roof interior, ceiling board, false ceiling]
+    tier: mvp
+    prompts:
+      crack:         [ceiling crack]
+      stain:         [ceiling stain]
+      water_damage:  [water damage on ceiling]
+      peeling_paint: [peeling ceiling paint]
+      hole:          [hole in ceiling]
+      mold:          [mold on ceiling]
+  floor_tile:
+    label: Floor tile
+    aliases: [floor tile, tiles floor, tiled floor, floor tiles, ceramic floor, tile flooring, floor]
+    tier: mvp
+    prompts:
+      crack:   [cracked floor tile]
+      chip:    [chipped tile]
+      missing: [missing tile]
+      stain:   [floor stain]
+  wall_tile:
+    label: Wall tile
+    aliases: [wall tile, wall tiles, backsplash, splashback, tiled wall, shower tiles]
+    tier: mvp
+    prompts:
+      crack: [cracked wall tile]
+      chip:  [chipped wall tile]
+      mold:  [mold on tiles]
+      stain: [stain on tiles]
+  grout:
+    label: Grout
+    aliases: [grout, grout lines, tile joints, caulk, sealant]
+    tier: mvp
+    prompts:
+      crack:         [cracked grout]
+      missing_grout: [missing grout]
+      discoloration: [discolored grout, dirty grout]
+      mold:          [mold in grout]
+  floor:
+    label: Floor
+    aliases: [wooden floor, wood floor, laminate floor, parquet, vinyl floor, hardwood floor, concrete floor]
+    tier: mvp
+    prompts:
+      scratch:        [floor scratch]
+      stain:          [floor stain]
+      water_damage:   [water damaged floor]
+      surface_damage: [damaged floorboard]
+  countertop:
+    label: Countertop
+    aliases: [countertop, counter top, counter, worktop, kitchen counter, benchtop, granite counter, marble counter]
+    tier: mvp
+    prompts:
+      scratch:       [countertop scratch]
+      crack:         [countertop crack]
+      chip:          [chipped countertop edge]
+      stain:         [countertop stain]
+      burn_mark:     [burn mark on countertop]
+      discoloration: [discolored countertop]
+  cupboard:
+    label: Cupboard / cabinet
+    aliases: [cupboard, cupboards, cabinet, cabinets, kitchen cabinet, wardrobe, closet, drawer, vanity]
+    tier: off   # not inspected (carpets / furniture excluded)
+    prompts:
+      surface_damage: [damaged cabinet door]
+      water_damage:   [water damaged cabinet]
+      broken:         [broken cabinet hinge]
+    # alignment cannot be judged reliably from one photo -> manual check
+    manual_checks: [Doors close flush and hinges hold]
+  cupboard_lock:
+    label: Cupboard lock / handle
+    aliases: [cupboard lock, cabinet lock, cabinet handle, drawer handle, cupboard handle, knob]
+    tier: off   # not inspected (carpets / furniture excluded)
+    prompts:
+      missing: [missing cabinet handle]
+      broken:  [broken cabinet lock]
+      rust:    [rusty cabinet hardware]
+    manual_checks: [Lock/unlock operation, Key operation]
+  door:
+    label: Door
+    aliases: [door, doors, door frame, entrance door, interior door, sliding door]
+    tier: mvp
+    prompts:
+      surface_damage: [damaged door, dented door]
+      hole:           [hole in door]
+      crack:          [cracked door]
+      scratch:        [door scratch, scratched door]
+      chip:           [chipped door edge]
+      peeling_paint:  [peeling paint on door]
+    manual_checks: [Door opens/closes, is aligned and latches]
+  door_lock:
+    label: Door lock / handle
+    aliases: [door lock, lock, door handle, deadbolt, door knob, latch, keypad lock, smart lock]
+    tier: v2
+    prompts:
+      missing: [missing door handle]
+      broken:  [broken door lock]
+      rust:    [rusty door lock]
+      detached: [loose door handle]
+    manual_checks: [Lock/unlock operation, Key operation, Deadbolt operation, Electronic lock function]
+  window:
+    label: Window
+    aliases: [window, windows, window frame, window pane, glass, sliding window, window sill]
+    tier: mvp
+    prompts:
+      broken_glass:   [broken window glass, cracked window glass]
+      surface_damage: [damaged window frame]
+      water_damage:   [water damage on window sill]
+      mold:           [mold on window frame]
+    manual_checks: [Window opens/closes and locks]
+  molding:
+    label: Molding / trim
+    aliases: [molding, moulding, trim, skirting, skirting board, baseboard, cornice, crown molding, architrave]
+    tier: v2
+    prompts:
+      chip:         [chipped molding]
+      crack:        [cracked baseboard]
+      detached:     [detached molding]
+      water_damage: [water damaged baseboard]
+      missing:      [missing baseboard]
+  rug:
+    label: Rug / carpet
+    aliases: [rug, rugs, carpet, carpets, mat, runner, area rug]
+    tier: off   # not inspected (carpets / furniture excluded)
+    prompts:
+      stain:         [rug stain, carpet stain]
+      tear:          [torn rug]
+      burn_mark:     [burn mark on carpet]
+      worn:          [worn carpet]
+      discoloration: [faded carpet]
+  exhaust_hood:
+    label: Kitchen exhaust
+    aliases: [exhaust hood, range hood, cooker hood, kitchen exhaust, chimney hood, extractor fan, extractor hood, vent hood, exhaust fan]
+    tier: v2
+    prompts:
+      grease_buildup: [grease buildup on range hood]
+      rust:           [rust on range hood]
+      broken:         [broken exhaust grille]
+      missing:        [missing hood filter]
+      surface_damage: [dented range hood]
+    manual_checks: [Fan operation, Motor function, Airflow, Noise, Electrical function]
+
+# Checks that are NEVER decided by AI (spec phase 17). `triggers` = defect types
+# that attach this professional-review note when detected on any component.
+professional_review:
+  structural:
+    triggers: [crack, deformation]
+    components: [wall, ceiling, floor_tile, floor]
+    checks: [Structural significance, Safety risk, Root cause]
+  moisture:
+    triggers: [water_damage, mold]
+    checks: [Moisture source / active leak]
+
+# Hard negatives: shown to the verifier as common look-alikes (spec phase 8).
+hard_negatives:
+  crack:         [tile grout lines, marble veins, wood grain, shadows, wall corners or edges, cables or wires, hair or debris]
+  scratch:       [reflections, countertop pattern, wood grain, light glare, door handles or lock hardware, panel grooves or edges]
+  stain:         [shadows, reflections, rug pattern, natural stone pattern, lighting gradient]
+  discoloration: [lighting gradient, shadows, pattern variation]
+  mold:          [shadows, dark grout, dirt pattern]
+  water_damage:  [shadows, lighting gradient, decorative texture]
+  broken_glass:  [window reflections, blinds, window muntins]
+  worn:          [normal doormat texture, rug pattern, lighting gradient]
+  surface_damage: [patterned tiles or floor design, grout lines, shadows, reflections, fixtures and hardware]
+  hole:          [keyholes, door handles and locks, electrical outlets, switch plates, vents, ceiling lights or downlights, smoke detectors, screws, dark objects]
+  default:       [shadows, reflections, patterns, normal joints and edges, fixtures and hardware]
+
+router:
+  enabled_tiers: [mvp, v2]
+  max_classes_per_call: 8       # phrases per localizer call ("a</c>b</c>...")
+  max_components: 6            # room-typical components are routed first
+  always_include: []            # e.g. [wall] to always check walls
+  # When the user supplies component, only that component is routed.

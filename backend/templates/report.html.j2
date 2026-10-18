@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ title }}</title>
+<style>
+  :root { --ink:#1b1f24; --muted:#5b6470; --line:#dfe3e8; --bg:#ffffff; --panel:#f6f7f9;
+          --det:#dc2626; --rev:#d97706; --man:#2563eb; --ok:#15803d; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:14px/1.5 "Segoe UI", system-ui, sans-serif; }
+  main { max-width: 1000px; margin: 0 auto; padding: 32px 20px 64px; }
+  header.doc { border-bottom: 3px solid var(--ink); padding-bottom: 12px; margin-bottom: 24px; }
+  header.doc h1 { font-size: 22px; letter-spacing: .08em; margin: 0 0 8px; }
+  .meta { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 4px 16px; color: var(--muted); }
+  .meta b { color: var(--ink); font-weight: 600; }
+  section.room { margin: 28px 0 40px; page-break-inside: avoid; }
+  section.room > h2 { font-size: 18px; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin-bottom: 12px; }
+  .annot { width: 100%; border: 1px solid var(--line); border-radius: 6px; display:block; }
+  .warn { background:#fff7ed; border:1px solid #fed7aa; border-radius:6px; padding:8px 12px; margin:10px 0; color:#7c2d12; }
+  .issue { display:grid; grid-template-columns: 140px 1fr; gap: 14px; border:1px solid var(--line);
+           border-left: 5px solid var(--muted); border-radius: 6px; padding: 12px; margin: 10px 0; page-break-inside: avoid; }
+  .issue.DETECTED { border-left-color: var(--det); }
+  .issue.NEEDS_REVIEW { border-left-color: var(--rev); }
+  .issue.UNKNOWN { border-left-color: var(--man); }
+  .issue img { width: 140px; height: 140px; object-fit: cover; border-radius: 4px; border:1px solid var(--line); }
+  .issue h3 { margin: 0 0 4px; font-size: 15px; }
+  .pill { display:inline-block; font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color:#fff; }
+  .pill.DETECTED { background: var(--det); } .pill.NEEDS_REVIEW { background: var(--rev); }
+  .pill.UNKNOWN, .pill.MANUAL_CHECK_REQUIRED { background: var(--man); } .pill.NOT_DETECTED { background: var(--ok); }
+  dl { display:grid; grid-template-columns: 150px 1fr; gap: 2px 10px; margin: 6px 0 0; }
+  dt { color: var(--muted); } dd { margin: 0; }
+  table { width:100%; border-collapse: collapse; margin: 12px 0; }
+  th, td { text-align:left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: var(--panel); font-weight: 600; }
+  ul.checks { list-style: none; padding: 0; margin: 0; }
+  ul.checks li { padding: 4px 0; border-bottom: 1px dashed var(--line); }
+  ul.checks li::before { content: "☐ "; color: var(--man); font-weight: 700; }
+  .risk { border:1px solid var(--line); border-radius:8px; padding:14px 16px; margin:14px 0; background:var(--panel); }
+  .risk h3 { margin:0 0 8px; font-size:15px; }
+  .risk .top { display:flex; flex-wrap:wrap; gap:10px 18px; align-items:center; }
+  .grade { font-size:26px; font-weight:800; width:48px; height:48px; border-radius:10px; color:#fff;
+           display:flex; align-items:center; justify-content:center; }
+  .grade.A { background:#15803d; } .grade.B { background:#65a30d; } .grade.C { background:#d97706; }
+  .grade.D { background:#ea580c; } .grade.E { background:#dc2626; }
+  .decision { font-weight:700; padding:4px 10px; border-radius:6px; background:#e0f2e9; color:#14532d; }
+  .decision.REFER { background:#fde2e2; color:#7f1d1d; } .decision.COND { background:#fff1d6; color:#7c2d12; }
+  .kv { display:grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap:4px 16px; margin-top:10px; }
+  .kv b { display:block; }
+  .flag { color:#7f1d1d; }
+  footer { margin-top: 40px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--line); padding-top: 10px; }
+  @media print { main { padding: 0; } .issue, section.room { break-inside: avoid; } }
+  @media (max-width: 600px) { .issue { grid-template-columns: 1fr; } .issue img { width: 100%; height: auto; } dl { grid-template-columns: 1fr; } }
+</style>
+</head>
+{% macro riskbox(r, heading) %}{% if r %}
+<div class="risk">
+  <h3>{{ heading }}</h3>
+  <div class="top">
+    <div class="grade {{ r.grade }}">{{ r.grade }}</div>
+    <div>Condition score <b>{{ r.condition_score }}</b>/100 · {{ r.grade_label }}<br>Risk level <b>{{ r.risk_level }}</b></div>
+    {% set dcls = 'REFER' if r.decision.startswith('REFER') else ('COND' if 'CONDITIONS' in r.decision else '') %}
+    <div class="decision {{ dcls }}">{{ r.decision }}</div>
+  </div>
+  <div class="kv">
+    <div>Indicative repair cost<b>{{ r.repair_cost.currency }} {{ '{:,}'.format(r.repair_cost.low) }} – {{ '{:,}'.format(r.repair_cost.high) }}</b></div>
+    <div>Valuation impact<b>{{ r.valuation.impact_pct[0] }}% to {{ r.valuation.impact_pct[1] }}%</b></div>
+    <div>Premium loading (suggested)<b>+{{ r.insurance.premium_loading_pct }}%</b></div>
+    <div>Collateral risk<b>{{ r.mortgage.collateral_risk }}</b></div>
+    {% if r.valuation.adjusted_value %}<div>Adjusted value<b>{{ '{:,}'.format(r.valuation.adjusted_value[0]) }} – {{ '{:,}'.format(r.valuation.adjusted_value[1]) }}</b></div>{% endif %}
+    {% if r.evidence.coverage_pct is not none %}<div>AI-inspected coverage<b>{{ r.evidence.coverage_pct }}%</b></div>{% endif %}
+  </div>
+  {% if r.insurance.perils %}<table><thead><tr><th>Peril</th><th>Findings</th><th>Risk points</th><th>Repair cost</th></tr></thead><tbody>
+  {% for pr in r.insurance.perils %}<tr><td><b>{{ pr.label }}</b> — {{ pr.peril }}</td><td>{{ pr.findings }}</td><td>{{ pr.risk_points }}</td><td>{{ '{:,}'.format(pr.repair_cost[0]) }} – {{ '{:,}'.format(pr.repair_cost[1]) }}</td></tr>{% endfor %}
+  </tbody></table>{% endif %}
+  {% if r.reasons %}<ul>{% for x in r.reasons %}<li>{{ x }}</li>{% endfor %}</ul>{% endif %}
+  {% for f in r.evidence.integrity_flags %}{% if f.level in ('high', 'medium') %}<div class="flag">⚑ Evidence integrity ({{ f.level }}): {{ f.message }}</div>{% endif %}{% endfor %}
+  <div style="color:var(--muted);font-size:12px;margin-top:6px">{{ r.disclaimer }}</div>
+</div>
+{% endif %}{% endmacro %}
+<body>
+<main>
+<header class="doc">
+  <h1>{{ title | upper }}</h1>
+  <div class="meta">
+    <div>Property ID: <b>{{ property_id or '-' }}</b></div>
+    <div>Generated: <b>{{ generated }}</b></div>
+    <div>Images inspected: <b>{{ blocks | length }}</b></div>
+    {% set n_det = namespace(v=0, r=0) %}
+    {% for b in blocks %}{% for d in b.ins.detections %}{% if d.state == S.DETECTED %}{% set n_det.v = n_det.v + 1 %}{% elif d.state in (S.NEEDS_REVIEW, S.UNKNOWN) %}{% set n_det.r = n_det.r + 1 %}{% endif %}{% endfor %}{% endfor %}
+    <div>Detected / Needs review: <b>{{ n_det.v }} / {{ n_det.r }}</b></div>
+  </div>
+</header>
+{{ riskbox(property_risk, "Property risk & valuation (all images)") }}
+{% for b in blocks %}{% set ins = b.ins %}
+<section class="room">
+  <h2>{{ ins.room_label }}</h2>
+  <div class="sub">Inspection {{ ins.inspection_id }} · {{ ins.created_at.strftime('%Y-%m-%d %H:%M') }} · source: {{ ins.source_image }}</div>
+  {% if ins.image_quality and ins.image_quality.warnings %}<div class="warn"><b>Image quality:</b> {{ ins.image_quality.warnings | join(' ') }}</div>{% endif %}
+  {% if b.annotated %}<img class="annot" src="{{ b.annotated }}" alt="Annotated inspection image">{% endif %}
+  {{ riskbox(ins.risk, "Risk & valuation") }}
+  {% if ins.ai_summary %}<div class="risk"><h3>Gemini underwriter summary</h3><div style="white-space:pre-wrap">{{ ins.ai_summary }}</div></div>{% endif %}
+
+  <h3>Detected issues</h3>
+  {% set active = ins.detections | rejectattr('state', 'equalto', S.NOT_DETECTED) | list %}
+  {% if not active %}<p>No visible defects were confirmed in this image.</p>{% endif %}
+  {% for d in active %}
+  <div class="issue {{ d.state.value }}">
+    {% if b.crops[d.issue_id] %}<img src="{{ b.crops[d.issue_id] }}" alt="close-up">{% else %}<div></div>{% endif %}
+    <div>
+      <h3>#{{ d.issue_id }} — {{ d.component_label }}: {{ d.defect.label }} <span class="pill {{ d.state.value }}">{{ state_labels[d.state] }}</span></h3>
+      <dl>
+        <dt>Observation</dt><dd>{{ d.description or '-' }}</dd>
+        <dt>Severity (visual)</dt><dd>{{ d.defect.severity }}</dd>
+        {% if d.review_reasons %}<dt>Why review</dt><dd>{{ d.review_reasons | join(' ') }}</dd>{% endif %}
+        {% if d.professional_review %}<dt>Professional check</dt><dd>{{ d.professional_review | join(', ') }} — not assessable from a photo.</dd>{% endif %}
+        <dt>Location (px)</dt><dd>{{ d.localization.x1|round|int }}, {{ d.localization.y1|round|int }} – {{ d.localization.x2|round|int }}, {{ d.localization.y2|round|int }}</dd>
+      </dl>
+    </div>
+  </div>
+  {% endfor %}
+
+  <h3>Component summary</h3>
+  <table>
+    <tr><th>Component</th><th>Visible condition</th><th>Status</th><th>Functional test</th></tr>
+    {% for c in ins.components %}
+    <tr><td>{{ c.label }}</td><td>{{ c.visible_summary }}</td>
+        <td><span class="pill {{ c.visible_state.value }}">{{ state_labels[c.visible_state] }}</span></td>
+        <td>{% if c.manual_checks %}Manual check required{% else %}-{% endif %}</td></tr>
+    {% endfor %}
+  </table>
+
+  {% if ins.manual_checks %}
+  <h3>Manual inspection required</h3>
+  <ul class="checks">
+    {% for m in ins.manual_checks %}<li><b>{{ m.component_label }}</b> — {{ m.check }} <span style="color:var(--muted)">({{ m.reason }})</span></li>{% endfor %}
+  </ul>
+  {% endif %}
+  {% if ins.unknown_items %}
+  <h3>Unknown / unverified items</h3>
+  <ul>{% for u in ins.unknown_items %}<li>{{ u }}</li>{% endfor %}</ul>
+  {% endif %}
+</section>
+{% endfor %}
+
+<footer>
+  {{ blocks[0].ins.disclaimer if blocks else '' }}<br>
+  {% if blocks %}Models: {{ blocks[0].ins.options.get('models', {}).get('localization', '') }} (localization),
+  {{ blocks[0].ins.options.get('models', {}).get('verification', '') }} (verification).{% endif %}
+</footer>
+</main>
+</body>
+</html>

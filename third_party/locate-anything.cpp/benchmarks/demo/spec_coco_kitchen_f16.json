@@ -1,0 +1,89 @@
+{
+  "image": "/home/mudler/_git/locate-anything.cpp/benchmarks/media/coco_kitchen_in.png",
+  "img_w": 644,
+  "img_h": 448,
+  "query": "bottle \u00b7 bowl",
+  "note": "same detections \u00b7 GB10 GPU",
+  "link": "github.com/mudler/locate-anything.cpp",
+  "boxes": [
+    [
+      "bottle",
+      [
+        128.8,
+        284.48,
+        150.696,
+        318.08
+      ]
+    ],
+    [
+      "bottle",
+      [
+        130.088,
+        116.48,
+        153.916,
+        140.672
+      ]
+    ],
+    [
+      "bottle",
+      [
+        148.12,
+        281.344,
+        173.88,
+        316.736
+      ]
+    ],
+    [
+      "bottle",
+      [
+        218.316,
+        270.592,
+        257.6,
+        311.808
+      ]
+    ],
+    [
+      "bottle",
+      [
+        220.248,
+        252.672,
+        241.5,
+        282.24
+      ]
+    ],
+    [
+      "bottle",
+      [
+        226.688,
+        267.456,
+        257.6,
+        285.376
+      ]
+    ],
+    [
+      "bottle",
+      [
+        252.448,
+        270.592,
+        274.988,
+        282.24
+      ]
+    ]
+  ],
+  "engines": [
+    {
+      "label": "locate-anything.cpp (f16)",
+      "device": "GB10 GPU",
+      "proc_s": 1.336,
+      "rate": "7 boxes",
+      "accent": "teal"
+    },
+    {
+      "label": "PyTorch (official, bf16)",
+      "device": "GB10 GPU",
+      "proc_s": 2.744,
+      "rate": "greedy",
+      "accent": "slate"
+    }
+  ]
+}
