@@ -243,8 +243,12 @@ class LlamaCppVLM(VLM):
         t = time.perf_counter()
         self._log = open(log_path, "ab")
         flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+        # PR_SET_PDEATHSIG fires when the *thread* that forked exits, not the process: armed from a short-lived
+        # pool worker (the pipeline verifies images in threads) it would kill the server as soon as that worker
+        # finished, mid-request for everyone else. So only the main thread arms it; atexit/release() still clean up.
+        guard = (sys.platform.startswith("linux") and threading.current_thread() is threading.main_thread())
         self.proc = subprocess.Popen(cmd, stdout=self._log, stderr=subprocess.STDOUT, creationflags=flags,
-                                     preexec_fn=_die_with_parent if sys.platform.startswith("linux") else None)
+                                     preexec_fn=_die_with_parent if guard else None)
         _bind_to_parent(self.proc)   # an orphaned server would silently hold ~2.5 GB of VRAM
         if not self._atexit:
             atexit.register(self.release)

@@ -122,7 +122,7 @@ gcloud run jobs deploy "$JOB" --image "$IMAGE" --region "$JOB_REGION" --service-
   --gpu 1 --gpu-type nvidia-l4 "$ZR_FLAG" --cpu "$JOB_CPU" --memory "$JOB_MEM" \
   --tasks 1 --parallelism 1 --max-retries 0 --task-timeout 3600 \
   --command python --args=-m,backend.jobs.walkthrough_job \
-  --set-env-vars "^|^${ENV_COMMON},PI_GPU_RESIDENCY=coexist|LD_LIBRARY_PATH=${JOB_LD}" \
+  --set-env-vars "${ENV_COMMON},PI_GPU_RESIDENCY=coexist,LD_LIBRARY_PATH=${JOB_LD}" \
   --set-secrets "PI_GEMINI_API_KEY=${GEMINI_SECRET}:latest" "${VOL[@]}"
 bind gcloud run jobs add-iam-policy-binding "$JOB" --region "$JOB_REGION" --member "serviceAccount:${SA}" --role roles/run.developer
 
