@@ -137,22 +137,6 @@ video ─► 3D engine (engine3d/): Depth Anything 3 depth + OpenCV SLAM poses �
       ─► findings placed in 3D ─► property-level risk (coverage = evidence completeness) ─► 3D viewer
 ```
 
-### Accuracy (30-image pilot set, weak image-level labels)
-
-| Pipeline | Precision / Recall / **F1** | Missed defects | Clean rooms flagged |
-|---|---|---|---|
-| Gemini scene + Gemini boxes + strict verification (all-Gemini) | 0.44 / 0.84 / **0.58** | 0 | 2/11 |
-| LocateAnything-3B boxes (local GPU) + Gemini scene + verification | 0.47 / 0.37 / 0.41 | 26 | 2/11 |
-| LocateAnything-3B + Gemma 4 E4B (no Gemini) | 0.57 / 0.42 / 0.48 | 31 | 0/11 |
-
-The shipped hybrid (Gemini scene + LocateAnything + Gemma) has not yet been scored on this set.
-On videos it found defects where all-Gemini boxes found almost none. A Gemini second opinion on each finding
-is available (`PI_VALIDATE_BACKEND=gemini`) but is off by default. Set `PI_LOCATE_BACKEND=gemini PI_VERIFY_BACKEND=gemini PI_VALIDATE_BACKEND=off`
-for the all-Gemini pipeline.
-
-Timing on the RTX 3050 laptop: a photo takes about 30-60 s. For video, the 14 keyframes take about 6 min,
-LocateAnything takes ~5 s per frame and Gemma ~3-4 s per box. Gemini costs about US$0.005 per call,
-so roughly US$0.35 per walkthrough.
 
 ## Google Cloud technologies
 
