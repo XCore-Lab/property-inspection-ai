@@ -7,7 +7,6 @@ data/
 .env
 *.log
 tests/
-deploy/
 bin/
 *.zip
 README_FIRST.md
