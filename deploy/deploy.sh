@@ -5,7 +5,6 @@
 #   PROJECT_ID=my-project GPU=0 ./deploy/deploy.sh      # CPU-only service: no video walkthroughs (UI testing only)
 #   PROJECT_ID=my-project BUILD_BASE=1 ./deploy/deploy.sh   # also rebuild the base image (new weights / GPU binaries / torch)
 #   PROJECT_ID=my-project BASE_MACHINE=E2_HIGHCPU_8 ./deploy/deploy.sh   # if Cloud Build refuses the 32-vCPU machine
-# Step-by-step for Windows (Git Bash): deploy/RUNBOOK.md
 #
 # Two images: a BASE image (Dockerfile.base: CUDA builds, torch, ~9 GB of model weights) built on the first deploy
 # or with BUILD_BASE=1, and the thin APP image (Dockerfile: code only) built on every deploy, which uploads only the

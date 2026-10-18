@@ -14,8 +14,7 @@ Property Inspection AI, by Team XCore for the Google Cloud AI Builder Cup 2026 (
 | Document | What it covers |
 |---|---|
 | [Project README](../README.md) | Features, how it works, sample results, configuration, API |
-| [README_FIRST](../README_FIRST.md) | Quick start: what is in the folder, deploy and run locally |
-| [Deploy runbook](../deploy/RUNBOOK.md) | Step-by-step Google Cloud deployment from Windows |
+| [README_FIRST](../README_FIRST.md) | Quick start: what is in the folder and how to run it locally |
 | [Run it on another PC](../README.md#run-it-on-another-pc-teammates) | Setting up a teammate's machine |
 
 ## Media

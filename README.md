@@ -121,11 +121,6 @@ was tested and rejected: tracking broke and the room came out stretched.
 
 ## How it works
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/media/architecture-dark.png">
-  <img src="docs/media/architecture.png" alt="Architecture: users upload a phone walkthrough to one Cloud Run service with an L4 GPU, which runs the web app, 3D engine, coverage, AI inspection, risk engine and 3D report, calls Gemini 3.8 Flash on Vertex AI, and writes to Cloud Storage, BigQuery and Pub/Sub.">
-</picture>
-
 ```
 photo ─► quality check + integrity (dHash duplicate, EXIF) ─► Gemini: room + components + authenticity
       ─► prompt router (defect_classes.yaml) ─► LocateAnything-3B: defect boxes ─► NMS / merge
@@ -164,12 +159,9 @@ so roughly US$0.35 per walkthrough.
 | Technology | Use |
 |---|---|
 | **Gemini on Vertex AI** | scene + component recognition, image authenticity, 3D object naming, underwriter summary, grounded Q&A |
-| **Cloud Run** (+ NVIDIA L4 GPU) | the whole app in one container: FastAPI API, web UI, LocateAnything + Gemma (GPU), 3D engine |
-| **Cloud Storage** | app data mounted into Cloud Run (Cloud Storage FUSE): uploads, reports, 3D models, maps; optional archive copy (`PI_GCS_BUCKET`) |
+| **Cloud Storage** | optional archive copy of uploads, reports, 3D models and maps (`PI_GCS_BUCKET`) |
 | **BigQuery** | `property_risk.inspections`: grade, risk level, decision, repair exposure, perils, fraud flags, coverage, for portfolio analytics |
 | **Pub/Sub** | `inspection.completed` / `walkthrough.completed` events for event-driven underwriting and claims processing |
-| **Cloud Build + Artifact Registry** | container build and registry |
-| **IAM service account** | least-privilege access; no API keys in production |
 
 ## Run it on another PC (teammates)
 
@@ -217,7 +209,7 @@ Everything is in this folder: `models/locate_anything/locate-anything-q4_k-vitf1
 BASE), and the Windows GPU programs `bin/locate-anything/locate_anything.dll` and `bin/llama.cpp/llama-server.exe`.
 `run_local.bat` points `HF_HOME` at `models\hf`, so the Depth Anything weights load offline.
 
-Linux / macOS / Cloud Shell: `./run_local.sh`. Without a key, `set PI_MOCK_MODELS=1` runs the whole UI with fake models.
+Linux / macOS: `./run_local.sh`. Without a key, `set PI_MOCK_MODELS=1` runs the whole UI with fake models.
 
 The command line works too:
 
@@ -229,56 +221,16 @@ The command line works too:
 
 Without a GPU, use the all-Gemini pipeline (see Accuracy) for photos. Depth Anything 3 also runs on CPU, but it is very slow.
 
-## Deploy to Google Cloud
-
-From a PC with the [Google Cloud CLI](https://cloud.google.com/sdk/docs/install) (`gcloud`, `bq`) logged in
-(`gcloud auth login`), in a bash shell (Linux / macOS, or Git Bash / WSL on Windows), from this folder.
-Not Cloud Shell: its 5 GB disk cannot hold the ~9 GB of model weights that are uploaded to the first build.
-
-```bash
-PROJECT_ID=<your-project> ./deploy/deploy.sh             # Cloud Run + L4 GPU (video walkthroughs)
-PROJECT_ID=<your-project> GPU=0 ./deploy/deploy.sh       # CPU only: no video walkthroughs (UI testing only)
-PROJECT_ID=<your-project> APP_API_KEY=<secret> ./deploy/deploy.sh   # protect the public demo URL
-PROJECT_ID=<your-project> BUILD_BASE=1 ./deploy/deploy.sh   # also rebuild the base image (new weights / GPU binaries)
-```
-
-The script:
-- enables the APIs
-- creates the Artifact Registry repo, a Cloud Storage bucket (mounted at `/app/data`), the BigQuery dataset `property_risk`, the Pub/Sub topic `inspection-events` and a service account (Vertex AI user, Storage, BigQuery, Pub/Sub publisher)
-- builds two images with Cloud Build:
-  - the **base image** (`Dockerfile.base`, only on the first deploy or with `BUILD_BASE=1`): uploads the folder
-    (~9 GB, mostly model weights; `bin/` is skipped), compiles LocateAnything and llama.cpp for Linux + CUDA,
-    installs PyTorch and the Python packages, bakes in all weights (~40-60 min)
-  - the **app image** (`Dockerfile`, every deploy): `FROM` the base, adds only the code. It uploads a few MB
-    (`deploy/app.gcloudignore` skips `models/` and `third_party/`) and pushes only the code layers
-- deploys Cloud Run with `--use-http2`: the container runs hypercorn (HTTP/2 cleartext), so video uploads are not
-  limited to Cloud Run's 32 MiB HTTP/1 request size
-- prints the URL
-
-The cloud image runs exactly the same pipeline as a local run: Gemini (Vertex AI) for scene + summary,
-LocateAnything-3B and Gemma 4 E4B on the L4 GPU (`PI_GPU_RESIDENCY=coexist`: both stay loaded), Depth Anything 3
-+ OpenCV SLAM for video. With `GPU=0` there is no local GPU, so photos use the all-Gemini pipeline and video
-walkthroughs are unavailable.
-
-GPU notes:
-- Cloud Run GPUs need GPU quota in the region (`us-central1` by default). Request "Total Nvidia L4 GPU allocation without zonal redundancy" in IAM → Quotas if the deploy says so.
-- `--max-instances 1` is set: one GPU runs one 3D reconstruction at a time. Further uploads wait in a queue (the UI
-  shows "waiting: another walkthrough is processing"). Each job's status is saved as `uploads/<name>.job.json` in
-  the bucket; jobs cut off by a restart show as "interrupted" and can be processed again without re-uploading.
-- `--no-cpu-throttling` keeps background jobs running after the HTTP response.
-- Keep the browser page open while a video runs (it polls progress); `MIN_INSTANCES=1` keeps one GPU instance
-  warm for a demo (no cold start, but billed while idle - set it back to 0 afterwards).
-
 ## Configuration (`PI_*` env vars or `.env`)
 
 | Variable | Default | Meaning |
 |---|---|---|
 | `PI_GEMINI_API_KEY` | — | AI Studio key (local runs) |
-| `PI_GEMINI_VERTEX`, `PI_GCP_PROJECT`, `PI_GCP_LOCATION` | 0, —, global | use Vertex AI (Cloud Run sets these) |
+| `PI_GEMINI_VERTEX`, `PI_GCP_PROJECT`, `PI_GCP_LOCATION` | 0, —, global | use Vertex AI instead of an AI Studio key |
 | `PI_GEMINI_MODEL` | gemini-3.8-flash | any Gemini model with vision + JSON output |
 | `PI_SCENE_BACKEND`, `PI_LOCATE_BACKEND`, `PI_VERIFY_BACKEND`, `PI_VALIDATE_BACKEND` | gemini, capi, gemma, off | model per role (`capi`/`cli` = LocateAnything, `gemma`, `gemini`, `off`, `mock`) |
 | `PI_MODELS_DIR`, `PI_LOCATE_LIB`, `PI_LLAMA_SERVER` | models/, bin/... | local model files and binaries |
-| `PI_GPU_RESIDENCY` | swap | `swap` = one local model on the GPU at a time (6-8 GB), `coexist` = both loaded (L4) |
+| `PI_GPU_RESIDENCY` | swap | `swap` = one local model on the GPU at a time (6-8 GB), `coexist` = both loaded (24 GB+ GPUs) |
 | `PI_VERIFY_STRICT` | auto | strict verification prompt (on automatically when the verifier is Gemini) |
 | `PI_GCS_BUCKET`, `PI_BQ_DATASET`, `PI_PUBSUB_TOPIC` | — | Google Cloud integrations (off when empty) |
 | `PI_API_KEY` | — | require `X-API-Key` on `/api/*` |
@@ -324,7 +276,6 @@ You can edit risk scoring, repair costs, valuation bands and premium loadings in
 | `engine3d/` | 3D engine: Depth Anything 3 + OpenCV SLAM + room model + floor plan |
 | `depth_anything_3/` | Depth Anything 3 inference code (weights download from Hugging Face / baked into the image) |
 | `frontend/` | web UI (no build step) |
-| `deploy/` | `deploy.sh`, `cloudbuild.yaml` (app image), `cloudbuild-base.yaml` (base image), `app.gcloudignore` |
 | `samples/` | sample photos (see `images/SOURCES.json`) + a sample walkthrough video |
 | `docs/` | documentation: pitch decks (`docs/pitch-deck/`), README media (`docs/media/`), [index](docs/README.md) |
 
