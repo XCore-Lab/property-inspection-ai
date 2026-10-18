@@ -11,7 +11,7 @@ Upload a phone walkthrough video of a property and get, in minutes:
 * for videos: a **3D model of the property**, a **2D floor plan**, and a **coverage map** that proves which
   walls / floors / ceilings were actually inspected (and which must be filmed again)
 * a **Gemini underwriting assistant** that answers questions about the inspection, citing issue ids
-* a **portfolio view**, with each record streamed to **BigQuery** and published as a **Pub/Sub** event
+* a **portfolio view** over every inspection record (JSON behind the REST API; optional BigQuery / Pub/Sub hand-off)
 
 Built by **Team XCore** for the Google Cloud AI Builder Cup 2026 (BFSI track). Pitch deck and documentation: [`docs/`](docs/README.md).
 
@@ -81,13 +81,13 @@ property risk and valuation, and the Gemini property summary and underwriting as
 
 | Step | Model | Runs on |
 |---|---|---|
-| Room, components, photo authenticity | Gemini 3.8 Flash | Vertex AI / AI Studio |
-| Defect boxes | LocateAnything-3B (GGUF, locate-anything.cpp) | GPU |
-| First defect check | Gemma 4 E4B (GGUF, llama.cpp server) | GPU |
+| Room, components, photo authenticity | Gemini 3.8 Flash | Gemini API (or Vertex AI) |
+| Defect boxes | LocateAnything-3B (GGUF, locate-anything.cpp) | GPU (Cloud Run L4 Job) |
+| First defect check | Gemma 4 E4B (GGUF, llama.cpp server) | GPU (Cloud Run L4 Job) |
 | Rule engine: DETECTED / NEEDS_REVIEW / NOT_DETECTED | deterministic (`fusion_service.py`) | CPU |
 | Risk, grade, cost, valuation, decision | deterministic (`risk_rules.yaml`) | CPU |
-| Video depth + 3D | Depth Anything 3 (DA3-BASE) + OpenCV 5 SLAM + Open3D TSDF | GPU + CPU |
-| 3D object names, underwriter summary, Q&A | Gemini 3.8 Flash | cloud |
+| Video depth + 3D | Depth Anything 3 (DA3-BASE) + OpenCV 5 SLAM + Open3D TSDF | GPU + CPU (Cloud Run L4 Job) |
+| 3D object names, underwriter summary, Q&A | Gemini 3.8 Flash | Gemini API |
 
 ### Video modes: Lite and Advanced
 
@@ -117,7 +117,7 @@ was tested and rejected: tracking broke and the room came out stretched.
 | Mortgage lenders need the collateral condition before lending | Condition grade, collateral risk, valuation impact %, repair retention suggestion |
 | Remote inspections can't show what was covered | Video → 3D model + coverage map; low AI-inspected coverage → **REFER - additional evidence required** |
 | Compliance / explainability of automated decisions | Deterministic rule engine and risk rules (`backend/config/risk_rules.yaml`); every decision lists its reasons; raw model outputs are archived; humans make the final decision |
-| Portfolio risk analytics | BigQuery table `inspections` (one row per photo / walkthrough); Pub/Sub events for downstream underwriting / claims systems |
+| Portfolio risk analytics | Every photo / walkthrough is a JSON record behind the REST API (`/api/v1/portfolio`, `/api/v1/walkthroughs`); optional BigQuery rows and Pub/Sub events for downstream underwriting / claims systems (`PI_BQ_DATASET`, `PI_PUBSUB_TOPIC`; off in the deployed setup) |
 
 ## How it works
 
@@ -127,7 +127,7 @@ photo ─► quality check + integrity (dHash duplicate, EXIF) ─► Gemini: ro
       ─► full-resolution crops ─► Gemma 4 E4B verification + CV line/blotch evidence
       ─► rule engine: DETECTED / NEEDS_REVIEW / MANUAL_CHECK_REQUIRED / NOT_DETECTED / UNKNOWN
       ─► risk engine: grade, perils, repair cost, valuation impact, premium loading, decision
-      ─► JSON + annotated image + HTML report ─► Cloud Storage / BigQuery / Pub/Sub
+      ─► JSON + annotated image + HTML report in the data dir (a Cloud Storage bucket on Cloud Run; BigQuery / Pub/Sub optional)
 
 video ─► 3D engine (engine3d/): Depth Anything 3 depth + OpenCV SLAM poses ─► TSDF fusion ─► walls / floor /
          ceiling / doors ─► objects named by Gemini ─► clean + SLAM GLB models, floor plan, occupancy map
@@ -158,10 +158,59 @@ so roughly US$0.35 per walkthrough.
 
 | Technology | Use |
 |---|---|
-| **Gemini on Vertex AI** | scene + component recognition, image authenticity, 3D object naming, underwriter summary, grounded Q&A |
-| **Cloud Storage** | optional archive copy of uploads, reports, 3D models and maps (`PI_GCS_BUCKET`) |
-| **BigQuery** | `property_risk.inspections`: grade, risk level, decision, repair exposure, perils, fraud flags, coverage, for portfolio analytics |
-| **Pub/Sub** | `inspection.completed` / `walkthrough.completed` events for event-driven underwriting and claims processing |
+| **Cloud Run (service)** | the web UI + API: CPU only, request-based billing, scales to zero |
+| **Cloud Run (job, NVIDIA L4)** | one execution per uploaded video: Depth Anything 3 + SLAM, LocateAnything-3B and Gemma 4 on the GPU; billed only while a video is processing |
+| **Gemini 3.8 Flash (Gemini API)** | scene + component recognition, image authenticity, 3D object naming, underwriter summary, grounded Q&A (Vertex AI also supported: `PI_GEMINI_VERTEX=1`) |
+| **Cloud Storage** | the data dir, mounted on both the service and the job: uploads, job status, reports, 3D models, maps |
+| **Secret Manager** | the Gemini API key (and the optional UI password), injected at runtime; no keys in the image or the repo |
+| **Cloud Build + Artifact Registry** | builds the ~12 GB image (CUDA binaries, PyTorch, baked-in weights); the weights are fetched from Google Drive inside the build |
+| **IAM service account** | least-privilege runtime account: the bucket, the secrets, and starting the GPU job |
+| BigQuery, Pub/Sub | optional: `property_risk.inspections` rows and `inspection.completed` / `walkthrough.completed` events (`PI_BQ_DATASET`, `PI_PUBSUB_TOPIC`) |
+
+## Deploy to Google Cloud (low cost)
+
+Two Cloud Run resources share one container image and one Cloud Storage bucket:
+
+```
+browser ──► Cloud Run SERVICE  property-inspection-ai   (1 vCPU, 2 GiB, min 0)   ── web UI, uploads, progress, results
+                 │  starts one execution per video (Cloud Run Jobs API)
+                 ▼
+            Cloud Run JOB      property-inspection-gpu  (8 vCPU, 32 GiB, 1× L4)  ── 3D engine + AI inspection
+                 │
+            Cloud Storage bucket mounted at /app/data on both: uploads/, walkthrough/<name>/, job status
+```
+
+Idle cost is the image storage only (≈ US$1.20/month); a 20-minute walkthrough costs ≈ US$0.50 of L4 time plus
+≈ US$0.35 of Gemini calls. The UI stays within the Cloud Run free tier.
+
+Requirements: a project with billing, `gcloud` logged in, and a Gemini API key (AI Studio). New projects get L4 quota
+automatically in `us-east4`, `europe-west4`, `europe-west1` and `asia-southeast1`; `us-central1` needs a quota request
+first, so the job can live in a different region than the service (`JOB_REGION`).
+
+```bash
+export CLOUDSDK_CORE_PROJECT=<project-id>
+gcloud services enable secretmanager.googleapis.com
+printf '%s' "$GEMINI_KEY" | gcloud secrets create gemini-api-key --replication-policy=automatic --data-file=-
+
+JOB_REGION=us-east4 PROJECT_ID=<project-id> DRIVE_ID=<Google_Hackathon_v1.zip file id> ./deploy/deploy_lowcost.sh
+```
+
+The first run (≈ 25 min) fetches the weights from Google Drive inside Cloud Build (`deploy/cloudbuild-fetch-models.yaml`,
+nothing goes through your laptop), builds the base image (`Dockerfile.base`: CUDA builds of locate-anything.cpp and
+llama.cpp, PyTorch, weights) and the app image, then deploys the job and the service and prints the URL. Later runs
+rebuild only the code layer (≈ 8 min). Options: `APP_API_KEY_SECRET=<secret>` puts the UI behind a password
+(`X-API-Key`, also required for `/walkthroughs/`), `JOB_CPU=4 JOB_MEM=16Gi` for the cheapest L4 size, `GPU_ZR=1` for
+zonal-redundant GPUs.
+
+The service is public without an IAM binding (`--no-invoker-iam-check`), which also works in organisations with the
+Domain Restricted Sharing policy. Useful commands:
+
+```bash
+gcloud run jobs executions list --job property-inspection-gpu --region us-east4      # one row per video
+gcloud run services logs read property-inspection-ai --region us-central1 --limit 50
+```
+
+`deploy/deploy.sh` is the original all-in-one variant (one GPU service, Vertex AI, BigQuery, Pub/Sub).
 
 ## Run it on another PC (teammates)
 
@@ -232,8 +281,9 @@ Without a GPU, use the all-Gemini pipeline (see Accuracy) for photos. Depth Anyt
 | `PI_MODELS_DIR`, `PI_LOCATE_LIB`, `PI_LLAMA_SERVER` | models/, bin/... | local model files and binaries |
 | `PI_GPU_RESIDENCY` | swap | `swap` = one local model on the GPU at a time (6-8 GB), `coexist` = both loaded (24 GB+ GPUs) |
 | `PI_VERIFY_STRICT` | auto | strict verification prompt (on automatically when the verifier is Gemini) |
-| `PI_GCS_BUCKET`, `PI_BQ_DATASET`, `PI_PUBSUB_TOPIC` | — | Google Cloud integrations (off when empty) |
-| `PI_API_KEY` | — | require `X-API-Key` on `/api/*` |
+| `PI_GPU_JOB` | — | Cloud Run job that processes walkthroughs (`projects/P/locations/R/jobs/NAME`); empty = run them in this process on the local GPU |
+| `PI_GCS_BUCKET`, `PI_BQ_DATASET`, `PI_PUBSUB_TOPIC` | — | optional Google Cloud integrations (off when empty) |
+| `PI_API_KEY` | — | require `X-API-Key` on `/api/*` and `/walkthroughs/` (the UI asks for it once) |
 | `PI_CURRENCY`, `PI_COST_MULTIPLIER` | USD, 1.0 | repair-cost currency and regional price index |
 | `PI_DA3_MODEL` | DA3-BASE | `DA3-SMALL` = faster 3D, slightly less detail |
 | `PI_SLAM_FPS`, `PI_SLAM_MAX_FRAMES` | 10, 600 | video sampling for the 3D engine |
@@ -269,7 +319,9 @@ You can edit risk scoring, repair costs, valuation bands and premium loadings in
 | `backend/services/fusion_service.py` | NMS, rule engine, safety wording |
 | `backend/services/risk_service.py` + `config/risk_rules.yaml` | risk & valuation engine |
 | `backend/services/integrity_service.py` | fraud / evidence-integrity signals |
-| `backend/services/cloud_service.py` | Cloud Storage, BigQuery, Pub/Sub |
+| `backend/services/cloud_service.py` | optional Cloud Storage archive, BigQuery, Pub/Sub |
+| `backend/jobs/walkthrough_job.py` | Cloud Run job entry point: processes one walkthrough (`python -m backend.jobs.walkthrough_job --name X`) |
+| `deploy/` | `deploy_lowcost.sh` (service + L4 job), Cloud Build configs, Drive weight fetch, original `deploy.sh` |
 | `backend/api/assistant.py` | Gemini underwriting assistant + portfolio |
 | `backend/spatial/` | coverage map, 3D finding placement, GLB building |
 | `scripts/inspect_walkthrough.py` | video → 3D engine → coverage → keyframes → inspection → risk |

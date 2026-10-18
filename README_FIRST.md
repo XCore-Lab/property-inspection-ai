@@ -31,6 +31,19 @@ setup_local.bat          :: once: creates .venv (Python 3.11 required) and .env
 run_local.bat            :: http://127.0.0.1:8080
 ```
 
+## Deploy to Google Cloud (low cost)
+
+One command deploys a CPU-only Cloud Run web service plus a Cloud Run Job with an NVIDIA L4 that runs only while a
+video is processing (idle ≈ US$1.20/month, ≈ US$0.85 per walkthrough). The model weights are fetched from Google
+Drive inside Cloud Build, so nothing large passes through your PC:
+
+```bash
+printf '%s' "$GEMINI_KEY" | gcloud secrets create gemini-api-key --replication-policy=automatic --data-file=-
+JOB_REGION=us-east4 PROJECT_ID=<project-id> DRIVE_ID=<Google_Hackathon_v1.zip file id> ./deploy/deploy_lowcost.sh
+```
+
+Details, options and the architecture: `README.md` → *Deploy to Google Cloud (low cost)*.
+
 ## Notes
 - Video walkthroughs take ~15–35 min each. Keep the page open while one runs.
 - Licences: LocateAnything-3B weights use the **NVIDIA non-commercial licence**, and Gemma uses the Gemma terms.
