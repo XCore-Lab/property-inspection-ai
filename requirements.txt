@@ -33,3 +33,4 @@ google-genai==2.29.0
 google-cloud-storage
 google-cloud-bigquery
 google-cloud-pubsub
+google-cloud-run         # PI_GPU_JOB: the web service starts a Cloud Run Job execution per walkthrough

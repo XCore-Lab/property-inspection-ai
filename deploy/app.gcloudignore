@@ -1,8 +1,8 @@
 # Files NOT uploaded for the APP image build (deploy.sh: gcloud builds submit --ignore-file deploy/app.gcloudignore).
 # The model weights and GPU sources are already in the base image (Dockerfile.base), so only code is uploaded.
-models/
+/models/
 third_party/
-bin/
+/bin/
 .venv/
 venv/
 data/

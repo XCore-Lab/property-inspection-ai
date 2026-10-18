@@ -37,7 +37,8 @@ ACTIVE = ("queued", "running")
 QUEUED_LINE = "[queued] waiting for the GPU (one 3D reconstruction at a time)\n"
 # fields written to <name>.job.json (the rest of a job dict is live progress state of this process)
 PERSIST = ("name", "mode", "status", "created", "started", "finished", "returncode", "video", "property_id",
-           "slam_args")
+           "slam_args", "seen", "counts")  # seen/counts: progress, so a job running in another process reaches the UI
+STALE_S = 3900                       # still "running" this long after it started: the job died without writing its status
 _jobs: dict[str, dict] = {}          # jobs submitted to THIS process
 _lock = threading.Lock()             # guards _jobs and the queued/running checks
 _queue: queue.Queue[str] = queue.Queue()
@@ -65,9 +66,12 @@ def _save(job: dict) -> None:
 
 def _read(name: str) -> dict | None:
     try:
-        return json.loads(_job_file(name).read_text(encoding="utf-8"))
+        rec = json.loads(_job_file(name).read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return None
+    if rec.get("status") in ACTIVE and time.time() - (rec.get("started") or rec.get("created") or 0) > STALE_S:
+        rec["status"] = "interrupted"    # a GPU job killed by its timeout / OOM never writes a final status
+    return rec
 
 
 def _job(name: str) -> dict | None:
@@ -89,6 +93,8 @@ def recover_jobs() -> list[str]:
     """Run once at startup: a job that was queued or running in the previous process died with it
     (its subprocess and the in-memory queue are gone), so mark it interrupted."""
     out = []
+    if get_settings().gpu_job:           # jobs run as Cloud Run Job executions: a restart here does not kill them
+        return out
     for p in sorted(UPLOADS.glob("*.job.json")):
         name = p.name[: -len(".job.json")]
         rec = _read(name)
@@ -128,12 +134,16 @@ def _run(job: dict) -> None:
         with open(log_path, "a", encoding="utf-8") as fh:
             proc = subprocess.Popen(_command(job), stdout=fh, stderr=subprocess.STDOUT, cwd=ROOT,
                                     env=os.environ.copy())
+            tick = 0
             while True:                  # timestamps each step marker even when no browser is polling
                 try:
                     proc.wait(timeout=2)
                     break
                 except subprocess.TimeoutExpired:
                     _scan(job, log_path)
+                    tick += 1
+                    if tick % 5 == 0:    # ~10 s: progress reaches a web service in another process via the file
+                        _save(job)
     _scan(job, log_path)
     job.update(status="done" if proc.returncode == 0 else "failed", finished=time.time(),
                returncode=proc.returncode)
@@ -154,8 +164,31 @@ def _work_loop() -> None:
             _save(job)
 
 
+def _dispatch(job: dict) -> None:
+    """Cloud deploy (PI_GPU_JOB): run the walkthrough as one Cloud Run Job execution, so the GPU is billed only while
+    it works. backend/jobs/walkthrough_job.py reads the status file this process wrote and calls _run()."""
+    from google.cloud import run_v2
+    over = run_v2.RunJobRequest.Overrides(container_overrides=[run_v2.RunJobRequest.Overrides.ContainerOverride(
+        args=["-m", "backend.jobs.walkthrough_job", "--name", job["name"]])])
+    run_v2.JobsClient().run_job(request=run_v2.RunJobRequest(name=get_settings().gpu_job, overrides=over))
+
+
 def _enqueue(job: dict) -> None:
     global _worker
+    if get_settings().gpu_job:
+        (UPLOADS / f"{job['name']}.log").write_text("[queued] starting the GPU job\n", encoding="utf-8")
+        _save(job)
+        try:
+            _dispatch(job)
+        except Exception as e:  # noqa: BLE001
+            job.update(status="failed", finished=time.time())
+            _save(job)
+            with _lock:
+                _jobs.pop(job["name"], None)
+            raise HTTPException(502, f"could not start the GPU job: {e}") from e
+        with _lock:                  # the job process owns the status file from here on; _job() reads it
+            _jobs.pop(job["name"], None)
+        return
     (UPLOADS / f"{job['name']}.log").write_text(QUEUED_LINE, encoding="utf-8")
     _save(job)
     _queue.put(job["name"])
@@ -240,7 +273,7 @@ NO_GPU = ("Video processing needs the GPU, and this demo server is running witho
 def _has_gpu() -> bool:
     """Depth Anything 3 needs CUDA: on a CPU-only deploy (GPU=0) it would run out of memory or take hours,
     so that server only shows walkthroughs that were processed elsewhere."""
-    return bool(gpu_info()["cuda"])
+    return bool(get_settings().gpu_job) or bool(gpu_info()["cuda"])
 
 
 @router.post("/walkthrough")
@@ -259,7 +292,7 @@ async def create_walkthrough(request: Request, video: UploadFile = File(...), pr
         name += "_lite"          # keeps a Lite and an Advanced run of the same video side by side
     file_name = f"{name}{Path(video.filename or '.mp4').suffix or '.mp4'}"
     with _lock:                  # reserve the name before the (slow) copy so a second upload gets 409
-        if _jobs.get(name, {}).get("status") in ACTIVE:
+        if (_jobs.get(name) or _read(name) or {}).get("status") in ACTIVE:
             raise HTTPException(409, "a walkthrough with this name is already queued or running")
         job = _jobs[name] = _new_job(name, mode, file_name, property_id, slam_args)
     try:
@@ -287,7 +320,7 @@ def retry_walkthrough(name: str):
         old = _job(name)
         if not old:
             raise HTTPException(404, "unknown walkthrough")
-        if name in _jobs and old.get("status") in ACTIVE:
+        if old.get("status") in ACTIVE and (name in _jobs or get_settings().gpu_job):
             raise HTTPException(409, "this walkthrough is already queued or running")
         if old.get("status") == "done":
             raise HTTPException(409, "this walkthrough already finished")

@@ -109,6 +109,8 @@ class Settings:
     bq_dataset: str = ""                  # stream risk rows to BigQuery <project>.<dataset>.inspections
     pubsub_topic: str = ""                # publish "inspection.completed" events
     api_key: str = ""                     # if set, /api/* requires header X-API-Key (simple demo auth)
+    gpu_job: str = ""                     # Cloud Run Job that runs walkthroughs (projects/P/locations/R/jobs/NAME);
+                                          # "" = run them in this process on the local GPU
 
     # --- product scope: the app inspects properties from video walkthroughs. Single-photo uploads
     # (POST /api/v1/inspect) are off; walkthroughs still run the photo pipeline on their keyframes internally.

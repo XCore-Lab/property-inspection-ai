@@ -8,8 +8,9 @@ __pycache__/
 
 # Model weights (~9 GB) and the Windows GPU programs (~2 GB) are too large for Git (GitHub's limit is 100 MB
 # per file). Copy models/ and bin/ from Google_Hackathon_v1.zip into this folder; see README_FIRST.md.
-models/
-bin/
+# Root-anchored: a bare "models/" would also ignore backend/models/ (the app's Pydantic schemas).
+/models/
+/bin/
 *.zip
 
 # local tooling

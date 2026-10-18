@@ -1,7 +1,7 @@
 # Files NOT uploaded for the BASE image build (deploy.sh: gcloud builds submit --ignore-file deploy/base.gcloudignore).
 # models/ is staged separately in a bucket (deploy/stage_models.sh: resumable) and copied in by the build itself.
-models/
-bin/
+/models/
+/bin/
 .venv/
 venv/
 data/
