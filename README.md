@@ -103,6 +103,39 @@ so roughly US$0.35 per walkthrough.
 | **Cloud Build + Artifact Registry** | container build and registry |
 | **IAM service account** | least-privilege access; no API keys in production |
 
+## Run it on another PC (teammates)
+
+The repository holds the code only. To run the app on a new machine you need four things:
+
+| What | Where it comes from |
+|---|---|
+| Access to this private repository | an XCore-Lab admin adds you (Settings → Collaborators, or an org invite) |
+| `models\` (~9 GB) and `bin\` (~2 GB) | `Google_Hackathon_v1.zip` from the team (too large for Git) |
+| A Gemini API key | your own from AI Studio, or one sent to you privately (never in a group chat or a commit) |
+| A Windows PC with an NVIDIA GPU (6 GB+), Python 3.11, Git and ~25 GB free disk | your machine |
+
+Steps:
+
+```bat
+git clone https://github.com/XCore-Lab/property-inspection-ai.git
+cd property-inspection-ai
+:: copy the models\ and bin\ folders from Google_Hackathon_v1.zip into this folder
+setup_local.bat          :: once: installs everything (PyTorch is a ~2.5 GB download) and creates .env
+:: open .env and put your key after PI_GEMINI_API_KEY=
+run_local.bat            :: http://127.0.0.1:8080
+```
+
+- **No Gemini key yet?** Add these two lines to `.env` and the app runs fully on the local GPU, with Gemma 4 E4B doing
+  the Gemini roles (3D object names then stay numbered):
+  ```
+  PI_SCENE_BACKEND=gemma
+  PI_VLM_BACKEND=gemma
+  ```
+- **No NVIDIA GPU?** The web app still opens, but videos can't be processed ("Video processing needs the GPU").
+- **The dashboard starts empty.** Upload `samples\room_walkthrough.mp4` under **Video walkthroughs** in Lite mode to
+  get the demo walkthrough (about 10 minutes on a laptop RTX GPU).
+- `.env` holds your key and is ignored by Git; never commit it.
+
 ## Run locally (Windows, NVIDIA GPU optional)
 
 ```bat
