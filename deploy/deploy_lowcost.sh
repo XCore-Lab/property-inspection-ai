@@ -23,7 +23,8 @@ BUCKET="${BUCKET:-${PROJECT_ID}-property-inspection}"     # app data (uploads, r
 BUILD_BUCKET="${BUILD_BUCKET:-${BUCKET}-build}"            # model weights, only for the base image build
 DRIVE_ID="${DRIVE_ID:-}"                                   # Google Drive id of Google_Hackathon_v1.zip (first run)
 GEMINI_SECRET="${GEMINI_SECRET:-gemini-api-key}"
-APP_API_KEY_SECRET="${APP_API_KEY_SECRET:-app-api-key}"
+APP_API_KEY_SECRET="${APP_API_KEY_SECRET:-}"               # optional: Secret Manager secret with a UI password
+                                                           # (X-API-Key); empty = the site is open to anyone with the URL
 GEMINI_MODEL="${GEMINI_MODEL:-gemini-3.8-flash}"
 DA3_MODEL="${DA3_MODEL:-DA3-BASE}"
 JOB_CPU="${JOB_CPU:-8}"
@@ -61,7 +62,7 @@ bind() {  # IAM on a fresh project is eventually consistent: one quiet retry
 bind gcloud projects add-iam-policy-binding "$PROJECT_ID" --member "serviceAccount:${SA}" --role roles/logging.logWriter --condition None
 bind gcloud storage buckets add-iam-policy-binding "gs://${BUCKET}" --member "serviceAccount:${SA}" --role roles/storage.objectAdmin
 for sec in "$GEMINI_SECRET" "$APP_API_KEY_SECRET"; do
-  bind gcloud secrets add-iam-policy-binding "$sec" --member "serviceAccount:${SA}" --role roles/secretmanager.secretAccessor
+  [ -n "$sec" ] && bind gcloud secrets add-iam-policy-binding "$sec" --member "serviceAccount:${SA}" --role roles/secretmanager.secretAccessor
 done
 CSA="${PN}-compute@developer.gserviceaccount.com"          # Cloud Build runs as this account on new projects
 for role in roles/logging.logWriter roles/artifactregistry.writer roles/storage.objectAdmin; do
@@ -102,12 +103,14 @@ VOL=(--add-volume "name=data,type=cloud-storage,bucket=${BUCKET}" --add-volume-m
 ENV_COMMON="PI_DATA_DIR=/app/data,PI_GEMINI_VERTEX=0,PI_GEMINI_MODEL=${GEMINI_MODEL},PI_DA3_MODEL=${DA3_MODEL}"
 
 echo "== Cloud Run SERVICE: web UI + API, CPU only, scales to zero"
+SVC_SECRETS="PI_GEMINI_API_KEY=${GEMINI_SECRET}:latest"
+[ -n "$APP_API_KEY_SECRET" ] && SVC_SECRETS="${SVC_SECRETS},PI_API_KEY=${APP_API_KEY_SECRET}:latest"
 gcloud run deploy "$SERVICE" --image "$IMAGE" --region "$REGION" --service-account "$SA" \
   --no-allow-unauthenticated --no-invoker-iam-check \
   --cpu 1 --memory 2Gi --cpu-boost --min-instances 0 --max-instances 2 --concurrency 40 --timeout 600 \
   --execution-environment gen2 --use-http2 \
   --set-env-vars "${ENV_COMMON},PI_GPU_JOB=projects/${PROJECT_ID}/locations/${JOB_REGION}/jobs/${JOB},PI_LOCATE_BACKEND=gemini,PI_VERIFY_BACKEND=gemini,PI_VALIDATE_BACKEND=off" \
-  --set-secrets "PI_GEMINI_API_KEY=${GEMINI_SECRET}:latest,PI_API_KEY=${APP_API_KEY_SECRET}:latest" "${VOL[@]}"
+  --set-secrets "$SVC_SECRETS" "${VOL[@]}"
 
 echo "== Cloud Run JOB: one walkthrough per execution on an NVIDIA L4 (needs L4 GPU quota in ${JOB_REGION})"
 ZR_FLAG=--no-gpu-zonal-redundancy
@@ -122,6 +125,6 @@ bind gcloud run jobs add-iam-policy-binding "$JOB" --region "$JOB_REGION" --memb
 
 URL=$(gcloud run services describe "$SERVICE" --region "$REGION" --format 'value(status.url)')
 echo
-echo "Deployed: ${URL}   (UI password: Secret Manager ${APP_API_KEY_SECRET})"
+echo "Deployed: ${URL}   $([ -n "$APP_API_KEY_SECRET" ] && echo "(UI password: Secret Manager ${APP_API_KEY_SECRET})" || echo "(open: no password)")"
 echo "Health:   ${URL}/api/v1/health"
 echo "GPU jobs: gcloud run jobs executions list --job ${JOB} --region ${JOB_REGION}"
