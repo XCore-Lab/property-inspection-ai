@@ -13,6 +13,8 @@ Upload a phone walkthrough video of a property and get, in minutes:
 * a **Gemini underwriting assistant** that answers questions about the inspection, citing issue ids
 * a **portfolio view**, with each record streamed to **BigQuery** and published as a **Pub/Sub** event
 
+Built by **Team XCore** for the Google Cloud AI Builder Cup 2026 (BFSI track). Pitch deck and documentation: [`docs/`](docs/README.md).
+
 ## See it in action
 
 The included sample, `samples/room_walkthrough.mp4` (a 20-second phone video of a living room and corridor), processed
@@ -319,6 +321,7 @@ You can edit risk scoring, repair costs, valuation bands and premium loadings in
 | `frontend/` | web UI (no build step) |
 | `deploy/` | `deploy.sh`, `cloudbuild.yaml` (app image), `cloudbuild-base.yaml` (base image), `app.gcloudignore` |
 | `samples/` | sample photos (see `images/SOURCES.json`) + a sample walkthrough video |
+| `docs/` | documentation: pitch decks (`docs/pitch-deck/`), README media (`docs/media/`), [index](docs/README.md) |
 
 ## Limitations and responsible use
 
@@ -330,7 +333,7 @@ You can edit risk scoring, repair costs, valuation bands and premium loadings in
 
 ## Licensing
 
-- App code: yours.
+- App code: © 2026 Team XCore: Thanveer Ahamed, Janitha Prathapa and Dinal Fernando.
 - Depth Anything 3 (DA3-SMALL / DA3-BASE): Apache-2.0.
 - Gemini: Google Cloud terms.
 - Gemma 4: Gemma terms of use.
