@@ -45,11 +45,17 @@ app = FastAPI(title="Property Inspection AI - risk & valuation", version="2.0.0"
 async def guard_and_cache(request: Request, call_next):
     s = get_settings()
     p = request.url.path
-    if s.api_key and p.startswith("/api/") and p != "/api/v1/health" and request.method != "OPTIONS":
-        key = request.headers.get("x-api-key") or request.query_params.get("key")
+    key = None
+    guarded = (p.startswith("/api/") and p != "/api/v1/health") or p.startswith("/walkthroughs/")
+    if s.api_key and guarded and request.method != "OPTIONS":
+        key = request.headers.get("x-api-key") or request.query_params.get("key") or request.cookies.get("pi_key")
         if key != s.api_key:
             return JSONResponse({"detail": "missing or invalid X-API-Key"}, status_code=401)
     resp = await call_next(request)
+    if key and request.cookies.get("pi_key") != key:
+        # Result pages (/walkthroughs/<name>/) and their models / images / videos cannot send the header: the key
+        # the UI sent once becomes a same-origin cookie, so those static requests pass the guard too.
+        resp.set_cookie("pi_key", key, httponly=True, samesite="lax", max_age=30 * 24 * 3600)
     # Browsers otherwise reuse an old index.html / app.js after the UI is updated.
     if p == "/" or p.startswith("/static/") or p.endswith((".html", "/")):
         resp.headers["Cache-Control"] = "no-cache"

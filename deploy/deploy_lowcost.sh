@@ -14,7 +14,9 @@
 set -euo pipefail
 
 PROJECT_ID="${PROJECT_ID:?set PROJECT_ID}"
-REGION="${REGION:-us-central1}"          # Cloud Run L4 regions: us-central1, us-east4, europe-west1, europe-west4, asia-southeast1
+REGION="${REGION:-us-central1}"          # web service, images, data bucket
+JOB_REGION="${JOB_REGION:-$REGION}"      # GPU job. New projects get L4 quota automatically in us-east4 / europe-west4 /
+                                         # europe-west1 / asia-southeast1; us-central1 needs a quota request first.
 SERVICE="${SERVICE:-property-inspection-ai}"
 JOB="${JOB:-property-inspection-gpu}"
 BUCKET="${BUCKET:-${PROJECT_ID}-property-inspection}"     # app data (uploads, results, job status): /app/data on both
@@ -26,6 +28,8 @@ GEMINI_MODEL="${GEMINI_MODEL:-gemini-3.8-flash}"
 DA3_MODEL="${DA3_MODEL:-DA3-BASE}"
 JOB_CPU="${JOB_CPU:-8}"
 JOB_MEM="${JOB_MEM:-32Gi}"                                 # L4 minimum is 4 / 16Gi (~25% cheaper per run; test first)
+GPU_ZR="${GPU_ZR:-0}"                                      # 1 = L4 with zonal redundancy (pricier) while the
+                                                           #     "without zonal redundancy" quota is still pending
 BUILD_BASE="${BUILD_BASE:-auto}"                           # auto = only if the base image is missing | 1 | 0
 BASE_MACHINE="${BASE_MACHINE:-E2_HIGHCPU_32}"              # E2_HIGHCPU_8 if the project may not use 32 vCPU
 DELETE_WEIGHTS="${DELETE_WEIGHTS:-1}"                      # drop the 9 GB staging bucket once the base image exists
@@ -97,25 +101,27 @@ gcloud builds submit --config deploy/cloudbuild.yaml --ignore-file deploy/app.gc
 VOL=(--add-volume "name=data,type=cloud-storage,bucket=${BUCKET}" --add-volume-mount "volume=data,mount-path=/app/data")
 ENV_COMMON="PI_DATA_DIR=/app/data,PI_GEMINI_VERTEX=0,PI_GEMINI_MODEL=${GEMINI_MODEL},PI_DA3_MODEL=${DA3_MODEL}"
 
-echo "== Cloud Run JOB: one walkthrough per execution on an NVIDIA L4"
-gcloud run jobs deploy "$JOB" --image "$IMAGE" --region "$REGION" --service-account "$SA" \
-  --gpu 1 --gpu-type nvidia-l4 --no-gpu-zonal-redundancy --cpu "$JOB_CPU" --memory "$JOB_MEM" \
-  --tasks 1 --parallelism 1 --max-retries 0 --task-timeout 3600 \
-  --command python --args=-m,backend.jobs.walkthrough_job \
-  --set-env-vars "${ENV_COMMON},PI_GPU_RESIDENCY=coexist" \
-  --set-secrets "PI_GEMINI_API_KEY=${GEMINI_SECRET}:latest" "${VOL[@]}"
-bind gcloud run jobs add-iam-policy-binding "$JOB" --region "$REGION" --member "serviceAccount:${SA}" --role roles/run.developer
-
 echo "== Cloud Run SERVICE: web UI + API, CPU only, scales to zero"
 gcloud run deploy "$SERVICE" --image "$IMAGE" --region "$REGION" --service-account "$SA" \
   --no-allow-unauthenticated --no-invoker-iam-check \
   --cpu 1 --memory 2Gi --cpu-boost --min-instances 0 --max-instances 2 --concurrency 40 --timeout 600 \
   --execution-environment gen2 --use-http2 \
-  --set-env-vars "${ENV_COMMON},PI_GPU_JOB=projects/${PROJECT_ID}/locations/${REGION}/jobs/${JOB},PI_LOCATE_BACKEND=gemini,PI_VERIFY_BACKEND=gemini,PI_VALIDATE_BACKEND=off" \
+  --set-env-vars "${ENV_COMMON},PI_GPU_JOB=projects/${PROJECT_ID}/locations/${JOB_REGION}/jobs/${JOB},PI_LOCATE_BACKEND=gemini,PI_VERIFY_BACKEND=gemini,PI_VALIDATE_BACKEND=off" \
   --set-secrets "PI_GEMINI_API_KEY=${GEMINI_SECRET}:latest,PI_API_KEY=${APP_API_KEY_SECRET}:latest" "${VOL[@]}"
+
+echo "== Cloud Run JOB: one walkthrough per execution on an NVIDIA L4 (needs L4 GPU quota in ${JOB_REGION})"
+ZR_FLAG=--no-gpu-zonal-redundancy
+[ "$GPU_ZR" = "1" ] && ZR_FLAG=--gpu-zonal-redundancy
+gcloud run jobs deploy "$JOB" --image "$IMAGE" --region "$JOB_REGION" --service-account "$SA" \
+  --gpu 1 --gpu-type nvidia-l4 "$ZR_FLAG" --cpu "$JOB_CPU" --memory "$JOB_MEM" \
+  --tasks 1 --parallelism 1 --max-retries 0 --task-timeout 3600 \
+  --command python --args=-m,backend.jobs.walkthrough_job \
+  --set-env-vars "${ENV_COMMON},PI_GPU_RESIDENCY=coexist" \
+  --set-secrets "PI_GEMINI_API_KEY=${GEMINI_SECRET}:latest" "${VOL[@]}"
+bind gcloud run jobs add-iam-policy-binding "$JOB" --region "$JOB_REGION" --member "serviceAccount:${SA}" --role roles/run.developer
 
 URL=$(gcloud run services describe "$SERVICE" --region "$REGION" --format 'value(status.url)')
 echo
 echo "Deployed: ${URL}   (UI password: Secret Manager ${APP_API_KEY_SECRET})"
 echo "Health:   ${URL}/api/v1/health"
-echo "GPU jobs: gcloud run jobs executions list --job ${JOB} --region ${REGION}"
+echo "GPU jobs: gcloud run jobs executions list --job ${JOB} --region ${JOB_REGION}"
