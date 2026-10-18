@@ -52,7 +52,9 @@ COPY requirements.txt .
 # torch cu124 wheels bring the CUDA 12.4 runtime + cuBLAS as pip packages; the GPU binaries use them too.
 RUN pip install --extra-index-url https://download.pytorch.org/whl/cu124 \
         "torch==2.5.1+cu124" "torchvision==0.20.1+cu124" -r requirements.txt
-ENV LD_LIBRARY_PATH=/usr/local/lib/python3.11/site-packages/nvidia/cuda_runtime/lib:/usr/local/lib/python3.11/site-packages/nvidia/cublas/lib
+# Every CUDA library the GPU binaries were linked against lives in torch's pip packages (the locate-anything build also
+# links NCCL); /usr/local/nvidia/lib64 is where Cloud Run mounts the driver.
+ENV LD_LIBRARY_PATH=/usr/local/lib/python3.11/site-packages/nvidia/cuda_runtime/lib:/usr/local/lib/python3.11/site-packages/nvidia/cublas/lib:/usr/local/lib/python3.11/site-packages/nvidia/nccl/lib:/usr/local/lib/python3.11/site-packages/nvidia/cuda_nvrtc/lib:/usr/local/lib/python3.11/site-packages/nvidia/cudnn/lib:/usr/local/lib/python3.11/site-packages/nvidia/cusparse/lib:/usr/local/lib/python3.11/site-packages/nvidia/cusolver/lib:/usr/local/lib/python3.11/site-packages/nvidia/cufft/lib:/usr/local/lib/python3.11/site-packages/nvidia/curand/lib:/usr/local/lib/python3.11/site-packages/nvidia/nvjitlink/lib:/usr/local/nvidia/lib64
 
 COPY --from=build /out /app/bin
 # Model weights (~9 GB): LocateAnything-3B GGUF, Gemma 4 E4B GGUF + vision projector, Depth Anything 3 BASE.

@@ -101,6 +101,9 @@ gcloud builds submit --config deploy/cloudbuild.yaml --ignore-file deploy/app.gc
 
 VOL=(--add-volume "name=data,type=cloud-storage,bucket=${BUCKET}" --add-volume-mount "volume=data,mount-path=/app/data")
 ENV_COMMON="PI_DATA_DIR=/app/data,PI_GEMINI_VERTEX=0,PI_GEMINI_MODEL=${GEMINI_MODEL},PI_DA3_MODEL=${DA3_MODEL}"
+# CUDA libraries for the GPU binaries (same list as Dockerfile.base; set here too so an older base image works)
+NV=/usr/local/lib/python3.11/site-packages/nvidia
+JOB_LD="${NV}/cuda_runtime/lib:${NV}/cublas/lib:${NV}/nccl/lib:${NV}/cuda_nvrtc/lib:${NV}/cudnn/lib:${NV}/cusparse/lib:${NV}/cusolver/lib:${NV}/cufft/lib:${NV}/curand/lib:${NV}/nvjitlink/lib:/usr/local/nvidia/lib64"
 
 echo "== Cloud Run SERVICE: web UI + API, CPU only, scales to zero"
 SVC_SECRETS="PI_GEMINI_API_KEY=${GEMINI_SECRET}:latest"
@@ -119,7 +122,7 @@ gcloud run jobs deploy "$JOB" --image "$IMAGE" --region "$JOB_REGION" --service-
   --gpu 1 --gpu-type nvidia-l4 "$ZR_FLAG" --cpu "$JOB_CPU" --memory "$JOB_MEM" \
   --tasks 1 --parallelism 1 --max-retries 0 --task-timeout 3600 \
   --command python --args=-m,backend.jobs.walkthrough_job \
-  --set-env-vars "${ENV_COMMON},PI_GPU_RESIDENCY=coexist" \
+  --set-env-vars "^|^${ENV_COMMON},PI_GPU_RESIDENCY=coexist|LD_LIBRARY_PATH=${JOB_LD}" \
   --set-secrets "PI_GEMINI_API_KEY=${GEMINI_SECRET}:latest" "${VOL[@]}"
 bind gcloud run jobs add-iam-policy-binding "$JOB" --region "$JOB_REGION" --member "serviceAccount:${SA}" --role roles/run.developer
 
