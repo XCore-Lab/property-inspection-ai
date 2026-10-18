@@ -13,6 +13,67 @@ Upload a phone walkthrough video of a property and get, in minutes:
 * a **Gemini underwriting assistant** that answers questions about the inspection, citing issue ids
 * a **portfolio view**, with each record streamed to **BigQuery** and published as a **Pub/Sub** event
 
+## See it in action
+
+The included sample, `samples/room_walkthrough.mp4` (a 20-second phone video of a living room and corridor), processed
+in Lite mode on a laptop RTX 3080 in about 10.5 minutes: 197 frames, 15 AI keyframes, 7 findings, 50.6% of surfaces
+inspectable, condition grade **A (95.7 / 100)**. The decision is **REFER: additional evidence required**, because too
+little of the property was filmed close enough to inspect, and the report lists exactly which areas to film again.
+
+**1. Upload and live scan.** While a video is processed, the progress view replays it under a scanning beam and shows
+each pipeline step with an ETA.
+
+<img src="docs/media/scanning-view.jpg" alt="Processing view: the walkthrough video under a scanning beam, with progress and the current pipeline step" width="760">
+
+**2. Detection on the AI keyframes.** LocateAnything-3B proposes defect boxes, Gemma 4 E4B checks a full-resolution
+close-up of each box, and the rule engine marks it *Detected* or *Needs review* (amber).
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/media/detection-door-window.jpg" alt="Keyframe with two boxes: door surface damage and window surface damage, both Needs review"></td>
+    <td width="50%"><img src="docs/media/detection-wall-mold.jpg" alt="Keyframe with one box: visible mold on the wall, Needs review"></td>
+  </tr>
+  <tr>
+    <td>Door and window frame: surface damage <img src="docs/media/closeup-window.jpg" alt="Close-up of the window frame" height="96" align="right"></td>
+    <td>Wall: possible mold patch near the floor <img src="docs/media/closeup-wall-mold.jpg" alt="Close-up of the wall patch" height="96" align="right"></td>
+  </tr>
+</table>
+
+**3. Live replay.** `live_map.mp4` replays the walk: the video on the left, and on the right the floor plan filling in as
+the camera moves (amber = seen, green = inspectable within 3 m, purple = AI keyframes), with coverage bars over time.
+
+![Live replay: video, coverage bars and the floor plan filling in as the camera moves](docs/media/live-replay.gif)
+
+[Full-quality replay video (MP4)](docs/media/live-replay.mp4)
+
+**4. Final coverage map.** Every 10 cm of wall, floor and ceiling is checked against every frame. The map shows the walk
+path, the AI keyframes, the numbered findings, and the areas that must be filmed again.
+
+<table>
+  <tr>
+    <td width="45%"><img src="docs/media/coverage-map.png" alt="Final coverage map with walk path, keyframes, numbered findings and coverage statistics"></td>
+    <td>
+      <b>Coverage</b><br>
+      Walls: seen 78%, inspectable 65.5%<br>
+      Floor: seen 74%, inspectable 69.3%<br>
+      Ceiling: seen 40.6%, inspectable 8.4%<br><br>
+      <b>Film again</b><br>
+      Main room ceiling (19.8 m²) and floor (3.6 m²)<br>
+      Corridor ceiling (3.5 m²) and floor (2.1 m²)<br>
+      South wall (1.7 m) and east wall (1.5 m)
+    </td>
+  </tr>
+</table>
+
+**5. 3D report.** The interactive 3D model with numbered finding pins (click one to fly to it), the findings list,
+property risk and valuation, and the Gemini property summary and underwriting assistant.
+
+<img src="docs/media/report-3d.jpg" alt="3D walkthrough report: 3D model with finding pins, findings list, risk card and Gemini summary">
+
+**Dashboard.** Condition grades, risk levels, underwriting decisions and repair exposure across all walkthroughs.
+
+<img src="docs/media/dashboard.png" alt="Dashboard with walkthrough figures, recent walkthroughs and condition grade chart">
+
 **Version 1.0.0 (frozen 2026-10-16).** Hybrid AI: **Gemini 3.8 Flash** (scene + summary)
 + two small local GPU models (**LocateAnything-3B** boxes, **Gemma 4 E4B** verifier) + **Depth Anything 3** for 3D.
 
